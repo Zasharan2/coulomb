@@ -253,7 +253,6 @@ function main() {
         case SCREEN.GAME: {
             placeModeTimer++;
             particleAddTimer++;
-            console.log(placeModeTimer);
 
             // background
             ctx.beginPath();
