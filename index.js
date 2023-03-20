@@ -208,12 +208,7 @@ var delay = 3;
 var placeModeTimer = delay;
 var particleAddTimer = 0;
 
-var prevTime;
-var deltaTime;
-
 function main() {
-    prevTime = Date.now();
-
     switch (gameScreen) {
         case SCREEN.NULL_TO_TITLE: {
             playButton = new Button("PLAY", 185, 120, 115, 60, "#ff0000", "#880000", "#ffffff", "#ffffff", "#888888", "#ffffff");
@@ -256,8 +251,8 @@ function main() {
             break;
         }
         case SCREEN.GAME: {
-            placeModeTimer += deltaTime
-            particleAddTimer += deltaTime;
+            placeModeTimer++;
+            particleAddTimer++;
             console.log(placeModeTimer);
 
             // background
@@ -351,9 +346,6 @@ function main() {
 
         
     }
-
-    deltaTime = (Date.now() - prevTime) / (1000 / 120); // 1000 (1 second) / 120 (frames)
-    console.log(deltaTime)
 
     window.requestAnimationFrame(main);
 }
