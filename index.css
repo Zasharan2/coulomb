@@ -5,5 +5,9 @@ body {
 }
 
 .yellow {
-    color: #ffff00
+    color: #ffff00;
+}
+
+.red {
+    color: #ff0000;
 }
