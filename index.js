@@ -202,11 +202,77 @@ class Particle {
 
 var particles = [];
 
+class Location {
+    constructor(x, y, w, h, type) {
+        this.x = x;
+        this.y = y;
+        this.w = w;
+        this.h = h;
+        this.type = type;
+    }
+
+    render() {
+        ctx.beginPath();
+        if (this.type == "SPAWN") {
+            ctx.fillStyle = "#00ff00";
+        } else if (this.type == "GOAL") {
+            ctx.fillStyle = "#ff00ff";
+        }
+        ctx.fillRect(this.x, this.y, this.w, this.h);
+    }
+};
+
+var spawnpoint;
+var goalpoint;
+
 var placeMode = 1;
 
 var delay = 20;
 var placeModeTimer = delay;
 var particleAddTimer = 0;
+var setup;
+
+var gameParticle;
+
+function resetArrows() {
+    for (var i = 0; i < gridLength; i++) {
+        for (var j = 0; j < gridLength; j++) {
+            arrows[i][j].r = 0;
+            arrows[i][j].theta = 0;
+        }
+    }
+}
+
+function arrowUpdateByParticles() {
+    // update arrows based on particles
+    for (var i = 0; i < particles.length; i++) {
+        for (var k = 0; k < gridLength; k++) {
+            for (var j = 0; j < gridLength; j++) {
+                if (particles[i].charge == 1) {
+                    var tempR = correction / ((Math.pow((arrows[k][j].x - particles[i].x), 2) + Math.pow((particles[i].y - arrows[k][j].y), 2)));
+                    var tempTheta = Math.atan2((particles[i].y - arrows[k][j].y), (arrows[k][j].x - particles[i].x));
+                    var xComp = (tempR * Math.cos(tempTheta)) + (arrows[k][j].r * Math.cos(arrows[k][j].theta));
+                    var yComp = (tempR * Math.sin(tempTheta)) + (arrows[k][j].r * Math.sin(arrows[k][j].theta));
+                    arrows[k][j].r = Math.sqrt(Math.pow((xComp), 2) + Math.pow((yComp), 2));
+                    arrows[k][j].theta = Math.atan2((yComp), (xComp));
+                } else if (particles[i].charge == -1) {
+                    var tempR = correction / ((Math.pow((particles[i].x - arrows[k][j].x), 2) + Math.pow((arrows[k][j].y - particles[i].y), 2)));
+                    var tempTheta = Math.atan2((arrows[k][j].y - particles[i].y), (particles[i].x - arrows[k][j].x));
+                    var xComp = (tempR * Math.cos(tempTheta)) + (arrows[k][j].r * Math.cos(arrows[k][j].theta));
+                    var yComp = (tempR * Math.sin(tempTheta)) + (arrows[k][j].r * Math.sin(arrows[k][j].theta));
+                    arrows[k][j].r = Math.sqrt(Math.pow((xComp), 2) + Math.pow((yComp), 2));
+                    arrows[k][j].theta = Math.atan2((yComp), (xComp));
+                }
+
+                if (arrows[k][j].r > maxArrowLength) {
+                    arrows[k][j].r = maxArrowLength
+                } else if (arrows[k][j].r < (-1 * maxArrowLength)) {
+                    arrows[k][j].r = (-1 * maxArrowLength);
+                }
+            }
+        }
+    }    
+}
 
 function main() {
     switch (gameScreen) {
@@ -247,6 +313,11 @@ function main() {
             placeModeTimer = delay;
             particleAddTimer = 0;
 
+            spawnpoint = new Location(0, 240, 32, 32, "SPAWN");
+            goalpoint = new Location(480, 240, 32, 32, "GOAL");
+
+            setup = true;
+
             gameScreen = SCREEN.GAME;
             break;
         }
@@ -259,70 +330,61 @@ function main() {
             ctx.fillStyle = "#000000";
             ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
-            // mode switching
-            if (keys[" "] && placeModeTimer > delay) {
-                placeModeTimer = 0;
-                placeMode *= -1;
-            }
+            // location rendering
+            ctx.globalAlpha = 0.3;
+            spawnpoint.render();
+            goalpoint.render();
+            ctx.globalAlpha = 1;
 
-            // arrow handling
-            for (var i = 0; i < gridLength; i++) {
-                for (var j = 0; j < gridLength; j++) {
-                    if (placeMode == 1) {
-                        // arrows[i][j].xComp = arrows[i][j].x - mouseX;
-                        // arrows[i][j].yComp = mouseY - arrows[i][j].y;
-                        arrows[i][j].r = correction / ((Math.pow((arrows[i][j].x - mouseX), 2) + Math.pow((arrows[i][j].y - mouseY), 2)));
-                        arrows[i][j].theta = Math.atan2((mouseY - arrows[i][j].y), (arrows[i][j].x - mouseX));
-                        // arrows[i][j].rectToPolar();
-                    } else if (placeMode == -1) {
-                        // arrows[i][j].xComp = mouseX - arrows[i][j].x;
-                        // arrows[i][j].yComp = arrows[i][j].y - mouseY;
-                        // arrows[i][j].rectToPolar();
-                        arrows[i][j].r = correction / ((Math.pow((arrows[i][j].x - mouseX), 2) + Math.pow((arrows[i][j].y - mouseY), 2)));
-                        arrows[i][j].theta = Math.atan2((-1 * (mouseY - arrows[i][j].y)), (-1 * (arrows[i][j].x - mouseX)));
-                    }
-
-                    if (arrows[i][j].r > maxArrowLength) {
-                        arrows[i][j].r = maxArrowLength
-                    } else if (arrows[i][j].r < (-1 * maxArrowLength)) {
-                        arrows[i][j].r = (-1 * maxArrowLength);
-                    }
+            if (setup) {
+                // mode switching
+                if (keys[" "] && placeModeTimer > delay) {
+                    placeModeTimer = 0;
+                    placeMode *= -1;
                 }
-            }
 
-            // add particles
-            if (mouseDown && particleAddTimer > delay) {
-                particleAddTimer = 0;
-                particles.push(new Particle(mouseX, mouseY, placeMode));
-            }
-
-            // update arrows based on particles
-            for (var i = 0; i < particles.length; i++) {
-                for (var k = 0; k < gridLength; k++) {
+                // arrow handling
+                for (var i = 0; i < gridLength; i++) {
                     for (var j = 0; j < gridLength; j++) {
-                        if (particles[i].charge == 1) {
-                            var tempR = correction / ((Math.pow((arrows[k][j].x - particles[i].x), 2) + Math.pow((particles[i].y - arrows[k][j].y), 2)));
-                            var tempTheta = Math.atan2((particles[i].y - arrows[k][j].y), (arrows[k][j].x - particles[i].x));
-                            var xComp = (tempR * Math.cos(tempTheta)) + (arrows[k][j].r * Math.cos(arrows[k][j].theta));
-                            var yComp = (tempR * Math.sin(tempTheta)) + (arrows[k][j].r * Math.sin(arrows[k][j].theta));
-                            arrows[k][j].r = Math.sqrt(Math.pow((xComp), 2) + Math.pow((yComp), 2));
-                            arrows[k][j].theta = Math.atan2((yComp), (xComp));
-                        } else if (particles[i].charge == -1) {
-                            var tempR = correction / ((Math.pow((particles[i].x - arrows[k][j].x), 2) + Math.pow((arrows[k][j].y - particles[i].y), 2)));
-                            var tempTheta = Math.atan2((arrows[k][j].y - particles[i].y), (particles[i].x - arrows[k][j].x));
-                            var xComp = (tempR * Math.cos(tempTheta)) + (arrows[k][j].r * Math.cos(arrows[k][j].theta));
-                            var yComp = (tempR * Math.sin(tempTheta)) + (arrows[k][j].r * Math.sin(arrows[k][j].theta));
-                            arrows[k][j].r = Math.sqrt(Math.pow((xComp), 2) + Math.pow((yComp), 2));
-                            arrows[k][j].theta = Math.atan2((yComp), (xComp));
+                        if (placeMode == 1) {
+                            // arrows[i][j].xComp = arrows[i][j].x - mouseX;
+                            // arrows[i][j].yComp = mouseY - arrows[i][j].y;
+                            arrows[i][j].r = correction / ((Math.pow((arrows[i][j].x - mouseX), 2) + Math.pow((arrows[i][j].y - mouseY), 2)));
+                            arrows[i][j].theta = Math.atan2((mouseY - arrows[i][j].y), (arrows[i][j].x - mouseX));
+                            // arrows[i][j].rectToPolar();
+                        } else if (placeMode == -1) {
+                            // arrows[i][j].xComp = mouseX - arrows[i][j].x;
+                            // arrows[i][j].yComp = arrows[i][j].y - mouseY;
+                            // arrows[i][j].rectToPolar();
+                            arrows[i][j].r = correction / ((Math.pow((arrows[i][j].x - mouseX), 2) + Math.pow((arrows[i][j].y - mouseY), 2)));
+                            arrows[i][j].theta = Math.atan2((-1 * (mouseY - arrows[i][j].y)), (-1 * (arrows[i][j].x - mouseX)));
                         }
 
-                        if (arrows[k][j].r > maxArrowLength) {
-                            arrows[k][j].r = maxArrowLength
-                        } else if (arrows[k][j].r < (-1 * maxArrowLength)) {
-                            arrows[k][j].r = (-1 * maxArrowLength);
+                        if (arrows[i][j].r > maxArrowLength) {
+                            arrows[i][j].r = maxArrowLength
+                        } else if (arrows[i][j].r < (-1 * maxArrowLength)) {
+                            arrows[i][j].r = (-1 * maxArrowLength);
                         }
                     }
                 }
+
+                // add particles
+                if (mouseDown && particleAddTimer > delay) {
+                    particleAddTimer = 0;
+                    particles.push(new Particle(mouseX, mouseY, placeMode));
+                }
+
+                arrowUpdateByParticles();
+
+                if (keys["Enter"]) {
+                    gameParticle = new Particle(spawnpoint.x + (spawnpoint.w / 2), spawnpoint.y + (spawnpoint.h / 2), -1);
+                    particles.push(gameParticle);
+                    resetArrows();
+                    arrowUpdateByParticles();
+                    setup = false;
+                }
+            } else {
+                
             }
 
             // render arrows
