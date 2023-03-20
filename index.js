@@ -176,6 +176,8 @@ class Particle {
         this.x = x;
         this.y = y;
         this.charge = charge;
+        this.forceR = 0;
+        this.forceTheta = 0;
     }
 
     render() {
@@ -200,7 +202,10 @@ class Particle {
     }
 }
 
+var hoverParticle;
+
 var particles = [];
+var prevParticles = [];
 
 class Location {
     constructor(x, y, w, h, type) {
@@ -230,6 +235,7 @@ var placeMode = 1;
 var delay = 20;
 var placeModeTimer = delay;
 var particleAddTimer = 0;
+var maxParticleForce = 5;
 var setup;
 
 var gameParticle;
@@ -313,6 +319,8 @@ function main() {
             placeModeTimer = delay;
             particleAddTimer = 0;
 
+            hoverParticle = new Particle(mouseX, mouseY, placeMode);
+
             spawnpoint = new Location(0, 240, 32, 32, "SPAWN");
             goalpoint = new Location(480, 240, 32, 32, "GOAL");
 
@@ -337,6 +345,16 @@ function main() {
             ctx.globalAlpha = 1;
 
             if (setup) {
+                // hover particle movement
+                hoverParticle.x = mouseX;
+                hoverParticle.y = mouseY;
+                hoverParticle.charge = placeMode;
+    
+                // hover particle rendering
+                ctx.globalAlpha = 0.5;
+                hoverParticle.render();
+                ctx.globalAlpha = 1;
+
                 // mode switching
                 if (keys[" "] && placeModeTimer > delay) {
                     placeModeTimer = 0;
@@ -381,10 +399,47 @@ function main() {
                     particles.push(gameParticle);
                     resetArrows();
                     arrowUpdateByParticles();
+                    prevParticles = [];
+                    for (var i = 0; i < particles.length; i++) {
+                        prevParticles.push(particles[i]);
+                    }
                     setup = false;
                 }
             } else {
-                
+                resetArrows();
+                arrowUpdateByParticles();
+
+                // calculate forces on particles due to other particles
+                for (var i = 0; i < particles.length; i++) {
+                    particles[i].forceR = 0;
+                    particles[i].forceTheta = 0;
+                    for (var j = 0; j < particles.length; j++) {
+                        if (i != j) {
+                            var tempR = correction / ((Math.pow(particles[i].x - particles[j].x), 2) + Math.pow((particles[j].y - particles[i].y), 2));
+                            var tempTheta = Math.atan2((particles[i].charge * particles[j].charge) * (particles[j].y - particles[i].y), (particles[i].charge * particles[j].charge) * (particles[i].x - particles[j].x));
+                            var xComp = (tempR * Math.cos(tempTheta)) + (particles[i].forceR * Math.cos(particles[i].forceTheta));
+                            var yComp = (tempR * Math.sin(tempTheta)) + (particles[i].forceR * Math.sin(particles[i].forceTheta));
+                            particles[i].forceR = Math.sqrt(Math.pow((xComp), 2) + Math.pow((yComp), 2));
+                            particles[i].forceTheta = Math.atan2((yComp), (xComp));
+                        }
+                    }
+                }
+
+                // bound forces (so that particles don't move too fast)
+                for (var i = 0; i < particles.length; i++) {
+                    if (particles[i].forceR > maxParticleForce) {
+                        particles[i].forceR = maxParticleForce;
+                    }
+                    if (particles[i].forceR < (-1 * maxParticleForce)) {
+                        particles[i].forceR = (-1 * maxParticleForce);
+                    }
+                }
+
+                // move particles
+                for (var i = 0; i < particles.length; i++) {
+                    particles[i].x += (particles[i].forceR * Math.cos(particles[i].forceTheta));
+                    particles[i].y -= (particles[i].forceR * Math.sin(particles[i].forceTheta));
+                }
             }
 
             // render arrows
