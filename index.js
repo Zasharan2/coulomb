@@ -206,7 +206,7 @@ var placeMode = 1;
 
 var delay = 3;
 var placeModeTimer = delay;
-var particleAddTimer = delay;
+var particleAddTimer = 0;
 
 var prevTime;
 var deltaTime;
@@ -256,9 +256,9 @@ function main() {
             break;
         }
         case SCREEN.GAME: {
-            placeModeTimer++;
-            particleAddTimer++;
-            console.log(particleAddTimer);
+            placeModeTimer += deltaTime
+            particleAddTimer += deltaTime;
+            console.log(placeModeTimer);
 
             // background
             ctx.beginPath();
@@ -352,7 +352,8 @@ function main() {
         
     }
 
-    deltaTime = (Date.now() - prevTime) / (1000 / 120); // 1000 (1 second) / 60 (frames)
+    deltaTime = (Date.now() - prevTime) / (1000 / 120); // 1000 (1 second) / 120 (frames)
+    console.log(deltaTime)
 
     window.requestAnimationFrame(main);
 }
