@@ -237,8 +237,11 @@ var placeModeTimer = delay;
 var particleAddTimer = 0;
 var maxParticleForce = 5;
 var setup;
+var setupTimer = delay;
 
 var gameParticle;
+
+var level;
 
 function resetArrows() {
     for (var i = 0; i < gridLength; i++) {
@@ -318,13 +321,16 @@ function main() {
             }
             placeModeTimer = delay;
             particleAddTimer = 0;
+            setupTimer = delay;
 
             hoverParticle = new Particle(mouseX, mouseY, placeMode);
 
             spawnpoint = new Location(0, 240, 32, 32, "SPAWN");
-            goalpoint = new Location(480, 240, 32, 32, "GOAL");
+            goalpoint = new Location(240, 240, 32, 32, "GOAL");
 
             setup = true;
+
+            level = 1;
 
             gameScreen = SCREEN.GAME;
             break;
@@ -332,6 +338,7 @@ function main() {
         case SCREEN.GAME: {
             placeModeTimer++;
             particleAddTimer++;
+            setupTimer++;
 
             // background
             ctx.beginPath();
@@ -394,15 +401,17 @@ function main() {
 
                 arrowUpdateByParticles();
 
-                if (keys["Enter"]) {
+                if (keys["Enter"] && setupTimer > delay) {
+                    setupTimer = 0;
+
+                    prevParticles = [];
+                    for (var i = 0; i < particles.length; i++) {
+                        prevParticles.push(new Particle(particles[i].x, particles[i].y, particles[i].charge));
+                    }
                     gameParticle = new Particle(spawnpoint.x + (spawnpoint.w / 2), spawnpoint.y + (spawnpoint.h / 2), -1);
                     particles.push(gameParticle);
                     resetArrows();
                     arrowUpdateByParticles();
-                    prevParticles = [];
-                    for (var i = 0; i < particles.length; i++) {
-                        prevParticles.push(particles[i]);
-                    }
                     setup = false;
                 }
             } else {
@@ -439,6 +448,29 @@ function main() {
                 for (var i = 0; i < particles.length; i++) {
                     particles[i].x += (particles[i].forceR * Math.cos(particles[i].forceTheta));
                     particles[i].y -= (particles[i].forceR * Math.sin(particles[i].forceTheta));
+                }
+
+                if (AABB(gameParticle.x - particleSize, gameParticle.y - particleSize, particleSize * 2, particleSize * 2, goalpoint.x, goalpoint.y, goalpoint.w, goalpoint.h)) {
+                    setupTimer = 0;
+
+                    level++;
+                    delete gameParticle;
+                    particles = [];
+                    for (var i = 0; i < prevParticles.length; i++) {
+                        particles.push(new Particle(prevParticles[i].x, prevParticles[i].y, prevParticles[i].charge));
+                    }
+                    setup = true;
+                }
+
+                if (keys["Enter"] && setupTimer > delay) {
+                    setupTimer = 0;
+
+                    delete gameParticle;
+                    particles = [];
+                    for (var i = 0; i < prevParticles.length; i++) {
+                        particles.push(new Particle(prevParticles[i].x, prevParticles[i].y, prevParticles[i].charge));
+                    }
+                    setup = true;
                 }
             }
 
