@@ -204,7 +204,7 @@ var particles = [];
 
 var placeMode = 1;
 
-var delay = 3;
+var delay = 20;
 var placeModeTimer = delay;
 var particleAddTimer = 0;
 
