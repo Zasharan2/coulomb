@@ -395,8 +395,10 @@ function main() {
 
                 // add particles
                 if (mouseDown && particleAddTimer > delay) {
-                    particleAddTimer = 0;
-                    particles.push(new Particle(mouseX, mouseY, placeMode));
+                    if (mouseX > 0 && mouseX < 512 && mouseY > 0 && mouseY < 512) {
+                        particleAddTimer = 0;
+                        particles.push(new Particle(mouseX, mouseY, placeMode));
+                    }
                 }
 
                 arrowUpdateByParticles();
