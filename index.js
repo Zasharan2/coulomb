@@ -256,8 +256,8 @@ function main() {
             break;
         }
         case SCREEN.GAME: {
-            placeModeTimer += deltaTime;
-            particleAddTimer += deltaTime;
+            placeModeTimer++;
+            particleAddTimer++;
             console.log(particleAddTimer);
 
             // background
