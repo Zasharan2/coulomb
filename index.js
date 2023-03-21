@@ -261,27 +261,18 @@ function arrowUpdateByParticles() {
     for (var i = 0; i < particles.length; i++) {
         for (var k = 0; k < gridLength; k++) {
             for (var j = 0; j < gridLength; j++) {
-                if (Math.sign(particles[i].charge) == 1) {
-                    var tempR = (correction * Math.abs(particles[i].charge)) / ((Math.pow((arrows[k][j].x - particles[i].x), 2) + Math.pow((particles[i].y - arrows[k][j].y), 2)));
-                    var tempTheta = Math.atan2((particles[i].y - arrows[k][j].y), (arrows[k][j].x - particles[i].x));
-                    var xComp = (tempR * Math.cos(tempTheta)) + (arrows[k][j].r * Math.cos(arrows[k][j].theta));
-                    var yComp = (tempR * Math.sin(tempTheta)) + (arrows[k][j].r * Math.sin(arrows[k][j].theta));
-                    arrows[k][j].r = Math.sqrt(Math.pow((xComp), 2) + Math.pow((yComp), 2));
-                    arrows[k][j].theta = Math.atan2((yComp), (xComp));
-                } else if (Math.sign(particles[i].charge) == -1) {
-                    var tempR = (correction * Math.abs(particles[i].charge)) / ((Math.pow((particles[i].x - arrows[k][j].x), 2) + Math.pow((arrows[k][j].y - particles[i].y), 2)));
-                    var tempTheta = Math.atan2((arrows[k][j].y - particles[i].y), (particles[i].x - arrows[k][j].x));
-                    var xComp = (tempR * Math.cos(tempTheta)) + (arrows[k][j].r * Math.cos(arrows[k][j].theta));
-                    var yComp = (tempR * Math.sin(tempTheta)) + (arrows[k][j].r * Math.sin(arrows[k][j].theta));
-                    arrows[k][j].r = Math.sqrt(Math.pow((xComp), 2) + Math.pow((yComp), 2));
-                    arrows[k][j].theta = Math.atan2((yComp), (xComp));
-                }
+                var tempR = (correction * Math.abs(particles[i].charge)) / ((Math.pow((arrows[k][j].x - particles[i].x), 2) + Math.pow((particles[i].y - arrows[k][j].y), 2)));
+                var tempTheta = Math.atan2((Math.sign(particles[i].charge)) * (particles[i].y - arrows[k][j].y), (Math.sign(particles[i].charge)) * (arrows[k][j].x - particles[i].x));
+                var xComp = (tempR * Math.cos(tempTheta)) + (arrows[k][j].r * Math.cos(arrows[k][j].theta));
+                var yComp = (tempR * Math.sin(tempTheta)) + (arrows[k][j].r * Math.sin(arrows[k][j].theta));
+                arrows[k][j].r = Math.sqrt(Math.pow((xComp), 2) + Math.pow((yComp), 2));
+                arrows[k][j].theta = Math.atan2((yComp), (xComp));
 
-                if (arrows[k][j].r > maxArrowLength) {
-                    arrows[k][j].r = maxArrowLength
-                } else if (arrows[k][j].r < (-1 * maxArrowLength)) {
-                    arrows[k][j].r = (-1 * maxArrowLength);
-                }
+                // if (arrows[k][j].r > maxArrowLength) {
+                //     arrows[k][j].r = maxArrowLength
+                // } else if (arrows[k][j].r < (-1 * maxArrowLength)) {
+                //     arrows[k][j].r = (-1 * maxArrowLength);
+                // }
             }
         }
     }    
@@ -395,11 +386,11 @@ function main() {
                             arrows[i][j].theta = Math.atan2((-1 * (mouseY - arrows[i][j].y)), (-1 * (arrows[i][j].x - mouseX)));
                         }
 
-                        if (arrows[i][j].r > maxArrowLength) {
-                            arrows[i][j].r = maxArrowLength
-                        } else if (arrows[i][j].r < (-1 * maxArrowLength)) {
-                            arrows[i][j].r = (-1 * maxArrowLength);
-                        }
+                        // if (arrows[i][j].r > maxArrowLength) {
+                        //     arrows[i][j].r = maxArrowLength
+                        // } else if (arrows[i][j].r < (-1 * maxArrowLength)) {
+                        //     arrows[i][j].r = (-1 * maxArrowLength);
+                        // }
                     }
                 }
 
@@ -422,6 +413,7 @@ function main() {
 
                 arrowUpdateByParticles();
 
+                // change charge
                 if (overParticleBool && chargeChangeTimer > chargeChangeDelay) {
                     chargeChangeTimer = 0;
                     if (keys["ArrowUp"] || keys["w"]) {
@@ -438,11 +430,15 @@ function main() {
                     }
                 }
 
+                // remove particles
                 if (overParticleBool && keys["Backspace"]) {
                     particles.splice(overParticle, 1);
                     overParticleBool = false;
                 }
 
+                // detect collion
+
+                // switch setup mode
                 if (keys["Enter"] && setupTimer > delay) {
                     setupTimer = 0;
 
@@ -465,8 +461,8 @@ function main() {
                     particles[i].forceR = 0;
                     particles[i].forceTheta = 0;
                     for (var j = 0; j < particles.length; j++) {
-                        if (i != j) {
-                            var tempR = (correction * Math.abs(particles[i].charge * particles[j].charge)) / ((Math.pow(particles[i].x - particles[j].x), 2) + Math.pow((particles[j].y - particles[i].y), 2));
+                        if (!(i == j)) {
+                            var tempR = (correction * Math.abs(particles[i].charge * particles[j].charge)) / (Math.pow((particles[i].x - particles[j].x), 2) + Math.pow((particles[j].y - particles[i].y), 2));
                             var tempTheta = Math.atan2((Math.sign(particles[i].charge * particles[j].charge)) * (particles[j].y - particles[i].y), (Math.sign(particles[i].charge * particles[j].charge)) * (particles[i].x - particles[j].x));
                             var xComp = (tempR * Math.cos(tempTheta)) + (particles[i].forceR * Math.cos(particles[i].forceTheta));
                             var yComp = (tempR * Math.sin(tempTheta)) + (particles[i].forceR * Math.sin(particles[i].forceTheta));
@@ -476,20 +472,29 @@ function main() {
                     }
                 }
 
-                // bound forces (so that particles don't move too fast)
-                for (var i = 0; i < particles.length; i++) {
-                    if (particles[i].forceR > maxParticleForce) {
-                        particles[i].forceR = maxParticleForce;
-                    }
-                    if (particles[i].forceR < (-1 * maxParticleForce)) {
-                        particles[i].forceR = (-1 * maxParticleForce);
-                    }
-                }
+                // // bound forces (so that particles don't move too fast)
+                // for (var i = 0; i < particles.length; i++) {
+                //     if (particles[i].forceR > maxParticleForce) {
+                //         particles[i].forceR = maxParticleForce;
+                //     }
+                //     if (particles[i].forceR < (-1 * maxParticleForce)) {
+                //         particles[i].forceR = (-1 * maxParticleForce);
+                //     }
+                // }
 
                 // move particles
                 for (var i = 0; i < particles.length; i++) {
-                    particles[i].x += (particles[i].forceR * Math.cos(particles[i].forceTheta));
-                    particles[i].y -= (particles[i].forceR * Math.sin(particles[i].forceTheta));
+                    // bound speeds (so that particles don't move too fast)
+                    if (particles[i].forceR > maxParticleForce) {
+                        particles[i].x += (maxParticleForce * Math.cos(particles[i].forceTheta));
+                        particles[i].y -= (maxParticleForce * Math.sin(particles[i].forceTheta));
+                    } else if (particles[i].forceR < (-1 * maxParticleForce)) {
+                        particles[i].x += ((-1 * maxParticleForce) * Math.cos(particles[i].forceTheta));
+                        particles[i].y -= ((-1 * maxParticleForce) * Math.sin(particles[i].forceTheta));
+                    } else {
+                        particles[i].x += (particles[i].forceR * Math.cos(particles[i].forceTheta));
+                        particles[i].y -= (particles[i].forceR * Math.sin(particles[i].forceTheta));
+                    }
                 }
 
                 if (AABB(gameParticle.x - particleSize, gameParticle.y - particleSize, particleSize * 2, particleSize * 2, goalpoint.x, goalpoint.y, goalpoint.w, goalpoint.h)) {
