@@ -418,8 +418,6 @@ function main() {
                     overParticleBool = false;
                 }
 
-                // detect collion
-
                 // switch setup mode
                 if (keys["Enter"] && setupTimer > delay) {
                     setupTimer = 0;
@@ -479,6 +477,20 @@ function main() {
                         } else {
                             particles[i].x += (particles[i].forceR * Math.cos(particles[i].forceTheta));
                             particles[i].y -= (particles[i].forceR * Math.sin(particles[i].forceTheta));
+                        }
+                    }
+                }
+
+                // detect collion
+                for (var i = 0; i < particles.length; i++) {
+                    for (var j = 0; j < particles.length; j++) {
+                        if (i != j) {
+                            if ((Math.sign(particles[i].charge) == 1 && Math.sign(particles[j].charge) == -1) || (Math.sign(particles[i].charge) == -1 && Math.sign(particles[j].charge) == 1)) {
+                                if (AABB(particles[i].x - particleSize, particles[i].y - particleSize, particleSize * 2, particleSize * 2, particles[j].x - particleSize, particles[j].y - particleSize, particleSize * 2, particleSize * 2)) {
+                                    particles[i].charge = particles[i].charge + particles[j].charge;
+                                    particles.splice(j, 1);
+                                }
+                            }
                         }
                     }
                 }
