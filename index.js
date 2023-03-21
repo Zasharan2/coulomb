@@ -267,12 +267,6 @@ function arrowUpdateByParticles() {
                 var yComp = (tempR * Math.sin(tempTheta)) + (arrows[k][j].r * Math.sin(arrows[k][j].theta));
                 arrows[k][j].r = Math.sqrt(Math.pow((xComp), 2) + Math.pow((yComp), 2));
                 arrows[k][j].theta = Math.atan2((yComp), (xComp));
-
-                // if (arrows[k][j].r > maxArrowLength) {
-                //     arrows[k][j].r = maxArrowLength
-                // } else if (arrows[k][j].r < (-1 * maxArrowLength)) {
-                //     arrows[k][j].r = (-1 * maxArrowLength);
-                // }
             }
         }
     }    
@@ -373,24 +367,12 @@ function main() {
                 for (var i = 0; i < gridLength; i++) {
                     for (var j = 0; j < gridLength; j++) {
                         if (placeMode == 1) {
-                            // arrows[i][j].xComp = arrows[i][j].x - mouseX;
-                            // arrows[i][j].yComp = mouseY - arrows[i][j].y;
                             arrows[i][j].r = correction / ((Math.pow((arrows[i][j].x - mouseX), 2) + Math.pow((arrows[i][j].y - mouseY), 2)));
                             arrows[i][j].theta = Math.atan2((mouseY - arrows[i][j].y), (arrows[i][j].x - mouseX));
-                            // arrows[i][j].rectToPolar();
                         } else if (placeMode == -1) {
-                            // arrows[i][j].xComp = mouseX - arrows[i][j].x;
-                            // arrows[i][j].yComp = arrows[i][j].y - mouseY;
-                            // arrows[i][j].rectToPolar();
                             arrows[i][j].r = correction / ((Math.pow((arrows[i][j].x - mouseX), 2) + Math.pow((arrows[i][j].y - mouseY), 2)));
                             arrows[i][j].theta = Math.atan2((-1 * (mouseY - arrows[i][j].y)), (-1 * (arrows[i][j].x - mouseX)));
                         }
-
-                        // if (arrows[i][j].r > maxArrowLength) {
-                        //     arrows[i][j].r = maxArrowLength
-                        // } else if (arrows[i][j].r < (-1 * maxArrowLength)) {
-                        //     arrows[i][j].r = (-1 * maxArrowLength);
-                        // }
                     }
                 }
 
@@ -471,16 +453,6 @@ function main() {
                         }
                     }
                 }
-
-                // // bound forces (so that particles don't move too fast)
-                // for (var i = 0; i < particles.length; i++) {
-                //     if (particles[i].forceR > maxParticleForce) {
-                //         particles[i].forceR = maxParticleForce;
-                //     }
-                //     if (particles[i].forceR < (-1 * maxParticleForce)) {
-                //         particles[i].forceR = (-1 * maxParticleForce);
-                //     }
-                // }
 
                 // move particles
                 for (var i = 0; i < particles.length; i++) {
