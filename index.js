@@ -438,6 +438,11 @@ function main() {
                     }
                 }
 
+                if (overParticleBool && keys["Backspace"]) {
+                    particles.splice(overParticle, 1);
+                    overParticleBool = false;
+                }
+
                 if (keys["Enter"] && setupTimer > delay) {
                     setupTimer = 0;
 
