@@ -188,6 +188,9 @@ class Particle {
         } else if (Math.sign(this.charge) == -1) {
             ctx.fillStyle = "#0000ff";
             ctx.arc(this.x, this.y, (particleSize * (2 / 3)), 0, 2 * Math.PI, false);
+        } else if (Math.sign(this.charge) == 0) {
+            ctx.fillStyle = "#ffffff";
+            ctx.arc(this.x, this.y, particleSize, 0, 2 * Math.PI, false);
         }
         ctx.fill();
 
@@ -403,15 +406,9 @@ function main() {
                     chargeChangeTimer = 0;
                     if (keys["ArrowUp"] || keys["w"]) {
                         particles[overParticle].charge++;
-                        if (particles[overParticle].charge == 0) {
-                            particles[overParticle].charge = 1;
-                        }
                     }
                     if (keys["ArrowDown"] || keys["s"]) {
                         particles[overParticle].charge--;
-                        if (particles[overParticle].charge == 0) {
-                            particles[overParticle].charge = -1;
-                        }
                     }
                 }
 
