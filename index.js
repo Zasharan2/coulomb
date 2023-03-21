@@ -203,6 +203,7 @@ class Particle {
 }
 
 var hoverParticle;
+var overParticle;
 
 var particles = [];
 var prevParticles = [];
@@ -324,6 +325,7 @@ function main() {
             setupTimer = delay;
 
             hoverParticle = new Particle(mouseX, mouseY, placeMode);
+            overParticle = false;
 
             spawnpoint = new Location(0, 240, 32, 32, "SPAWN");
             goalpoint = new Location(240, 240, 32, 32, "GOAL");
@@ -352,15 +354,17 @@ function main() {
             ctx.globalAlpha = 1;
 
             if (setup) {
-                // hover particle movement
-                hoverParticle.x = mouseX;
-                hoverParticle.y = mouseY;
-                hoverParticle.charge = placeMode;
-    
-                // hover particle rendering
-                ctx.globalAlpha = 0.5;
-                hoverParticle.render();
-                ctx.globalAlpha = 1;
+                if (!overParticle) {
+                    // hover particle movement
+                    hoverParticle.x = mouseX;
+                    hoverParticle.y = mouseY;
+                    hoverParticle.charge = placeMode;
+        
+                    // hover particle rendering
+                    ctx.globalAlpha = 0.5;
+                    hoverParticle.render();
+                    ctx.globalAlpha = 1;
+                }
 
                 // mode switching
                 if (keys[" "] && placeModeTimer > delay) {
@@ -394,10 +398,18 @@ function main() {
                 }
 
                 // add particles
-                if (mouseDown && particleAddTimer > delay) {
+                if ((!overParticle) && mouseDown && particleAddTimer > delay) {
                     if (mouseX > 0 && mouseX < 512 && mouseY > 0 && mouseY < 512) {
                         particleAddTimer = 0;
                         particles.push(new Particle(mouseX, mouseY, placeMode));
+                    }
+                }
+
+                // detect overParticle
+                overParticle = false;
+                for (var i = 0; i < particles.length; i++) {
+                    if (AABB(mouseX - particleSize, mouseY - particleSize, particleSize * 2, particleSize * 2, particles[i].x - particleSize, particles[i].y - particleSize, particleSize * 2, particleSize * 2)) {
+                        overParticle = true;
                     }
                 }
 
