@@ -182,9 +182,9 @@ class Particle {
 
     render() {
         ctx.beginPath();
-        if (this.charge == 1) {
+        if (Math.sign(this.charge) == 1) {
             ctx.fillStyle = "#ff0000";
-        } else if (this.charge == -1) {
+        } else if (Math.sign(this.charge) == -1) {
             ctx.fillStyle = "#0000ff";
         }
         ctx.arc(this.x, this.y, particleSize, 0, 2 * Math.PI, false);
@@ -193,9 +193,9 @@ class Particle {
         ctx.beginPath();
         ctx.font = "30px Comic Sans MS";
         ctx.fillStyle = "#ffffff";
-        if (this.charge == 1) {
+        if (Math.sign(this.charge) == 1) {
             ctx.fillText("+", this.x - 7, this.y + 8);
-        } else if (this.charge == -1) {
+        } else if (Math.sign(this.charge) == -1) {
             ctx.fillText("-", this.x - 6, this.y + 9);
         }
 
@@ -203,6 +203,7 @@ class Particle {
 }
 
 var hoverParticle;
+var overParticleBool;
 var overParticle;
 
 var particles = [];
@@ -234,11 +235,13 @@ var goalpoint;
 var placeMode = 1;
 
 var delay = 20;
+var chargeChangeDelay = 10;
 var placeModeTimer = delay;
 var particleAddTimer = 0;
 var maxParticleForce = 5;
 var setup;
 var setupTimer = delay;
+var chargeChangeTimer = chargeChangeDelay;
 
 var gameParticle;
 
@@ -258,15 +261,15 @@ function arrowUpdateByParticles() {
     for (var i = 0; i < particles.length; i++) {
         for (var k = 0; k < gridLength; k++) {
             for (var j = 0; j < gridLength; j++) {
-                if (particles[i].charge == 1) {
-                    var tempR = correction / ((Math.pow((arrows[k][j].x - particles[i].x), 2) + Math.pow((particles[i].y - arrows[k][j].y), 2)));
+                if (Math.sign(particles[i].charge) == 1) {
+                    var tempR = (correction * Math.abs(particles[i].charge)) / ((Math.pow((arrows[k][j].x - particles[i].x), 2) + Math.pow((particles[i].y - arrows[k][j].y), 2)));
                     var tempTheta = Math.atan2((particles[i].y - arrows[k][j].y), (arrows[k][j].x - particles[i].x));
                     var xComp = (tempR * Math.cos(tempTheta)) + (arrows[k][j].r * Math.cos(arrows[k][j].theta));
                     var yComp = (tempR * Math.sin(tempTheta)) + (arrows[k][j].r * Math.sin(arrows[k][j].theta));
                     arrows[k][j].r = Math.sqrt(Math.pow((xComp), 2) + Math.pow((yComp), 2));
                     arrows[k][j].theta = Math.atan2((yComp), (xComp));
-                } else if (particles[i].charge == -1) {
-                    var tempR = correction / ((Math.pow((particles[i].x - arrows[k][j].x), 2) + Math.pow((arrows[k][j].y - particles[i].y), 2)));
+                } else if (Math.sign(particles[i].charge) == -1) {
+                    var tempR = (correction * Math.abs(particles[i].charge)) / ((Math.pow((particles[i].x - arrows[k][j].x), 2) + Math.pow((arrows[k][j].y - particles[i].y), 2)));
                     var tempTheta = Math.atan2((arrows[k][j].y - particles[i].y), (particles[i].x - arrows[k][j].x));
                     var xComp = (tempR * Math.cos(tempTheta)) + (arrows[k][j].r * Math.cos(arrows[k][j].theta));
                     var yComp = (tempR * Math.sin(tempTheta)) + (arrows[k][j].r * Math.sin(arrows[k][j].theta));
@@ -323,9 +326,11 @@ function main() {
             placeModeTimer = delay;
             particleAddTimer = 0;
             setupTimer = delay;
+            chargeChangeTimer = chargeChangeDelay;
 
             hoverParticle = new Particle(mouseX, mouseY, placeMode);
-            overParticle = false;
+            overParticleBool = false;
+            overParticle = -1;
 
             spawnpoint = new Location(0, 240, 32, 32, "SPAWN");
             goalpoint = new Location(240, 240, 32, 32, "GOAL");
@@ -341,6 +346,7 @@ function main() {
             placeModeTimer++;
             particleAddTimer++;
             setupTimer++;
+            chargeChangeTimer++;
 
             // background
             ctx.beginPath();
@@ -354,7 +360,7 @@ function main() {
             ctx.globalAlpha = 1;
 
             if (setup) {
-                if (!overParticle) {
+                if (!overParticleBool) {
                     // hover particle movement
                     hoverParticle.x = mouseX;
                     hoverParticle.y = mouseY;
@@ -398,7 +404,7 @@ function main() {
                 }
 
                 // add particles
-                if ((!overParticle) && mouseDown && particleAddTimer > delay) {
+                if ((!overParticleBool) && mouseDown && particleAddTimer > delay) {
                     if (mouseX > 0 && mouseX < 512 && mouseY > 0 && mouseY < 512) {
                         particleAddTimer = 0;
                         particles.push(new Particle(mouseX, mouseY, placeMode));
@@ -406,14 +412,31 @@ function main() {
                 }
 
                 // detect overParticle
-                overParticle = false;
+                overParticleBool = false;
                 for (var i = 0; i < particles.length; i++) {
                     if (AABB(mouseX - particleSize, mouseY - particleSize, particleSize * 2, particleSize * 2, particles[i].x - particleSize, particles[i].y - particleSize, particleSize * 2, particleSize * 2)) {
-                        overParticle = true;
+                        overParticleBool = true;
+                        overParticle = i;
                     }
                 }
 
                 arrowUpdateByParticles();
+
+                if (overParticleBool && chargeChangeTimer > chargeChangeDelay) {
+                    chargeChangeTimer = 0;
+                    if (keys["ArrowUp"] || keys["w"]) {
+                        particles[overParticle].charge++;
+                        if (particles[overParticle].charge == 0) {
+                            particles[overParticle].charge = 1;
+                        }
+                    }
+                    if (keys["ArrowDown"] || keys["s"]) {
+                        particles[overParticle].charge--;
+                        if (particles[overParticle].charge == 0) {
+                            particles[overParticle].charge = -1;
+                        }
+                    }
+                }
 
                 if (keys["Enter"] && setupTimer > delay) {
                     setupTimer = 0;
@@ -438,8 +461,8 @@ function main() {
                     particles[i].forceTheta = 0;
                     for (var j = 0; j < particles.length; j++) {
                         if (i != j) {
-                            var tempR = correction / ((Math.pow(particles[i].x - particles[j].x), 2) + Math.pow((particles[j].y - particles[i].y), 2));
-                            var tempTheta = Math.atan2((particles[i].charge * particles[j].charge) * (particles[j].y - particles[i].y), (particles[i].charge * particles[j].charge) * (particles[i].x - particles[j].x));
+                            var tempR = (correction * Math.abs(particles[i].charge * particles[j].charge)) / ((Math.pow(particles[i].x - particles[j].x), 2) + Math.pow((particles[j].y - particles[i].y), 2));
+                            var tempTheta = Math.atan2((Math.sign(particles[i].charge * particles[j].charge)) * (particles[j].y - particles[i].y), (Math.sign(particles[i].charge * particles[j].charge)) * (particles[i].x - particles[j].x));
                             var xComp = (tempR * Math.cos(tempTheta)) + (particles[i].forceR * Math.cos(particles[i].forceTheta));
                             var yComp = (tempR * Math.sin(tempTheta)) + (particles[i].forceR * Math.sin(particles[i].forceTheta));
                             particles[i].forceR = Math.sqrt(Math.pow((xComp), 2) + Math.pow((yComp), 2));
@@ -498,6 +521,20 @@ function main() {
             // render particles
             for (var i = 0; i < particles.length; i++) {
                 particles[i].render();
+            }
+
+            if (setup) {
+                // write particle charge
+                if (overParticleBool) {
+                    ctx.beginPath();
+                    ctx.font = "20px Comic Sans MS";
+                    ctx.fillStyle = "#ffffff";
+                    if (Math.sign(particles[overParticle].charge) == 1) {
+                        ctx.fillText("+" + particles[overParticle].charge, mouseX, mouseY);
+                    } else {
+                        ctx.fillText(particles[overParticle].charge, mouseX, mouseY);
+                    }
+                }
             }
 
             break;
