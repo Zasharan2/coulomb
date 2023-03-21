@@ -172,10 +172,11 @@ var arrows = Array(gridLength).fill().map(() => Array(gridLength).fill(0));;
 var particleSize = 10;
 
 class Particle {
-    constructor(x, y, charge) {
+    constructor(x, y, charge, locked) {
         this.x = x;
         this.y = y;
         this.charge = charge;
+        this.locked = locked;
         this.forceR = 0;
         this.forceTheta = 0;
     }
@@ -202,6 +203,16 @@ class Particle {
         } else if (Math.sign(this.charge) == -1) {
             ctx.font = "20px Comic Sans MS";
             ctx.fillText("-", this.x - 4, this.y + 6);
+        }
+
+        if (this.locked) {
+            ctx.beginPath();
+            ctx.fillStyle = "#aaaaaa";
+            ctx.fillRect(this.x + (particleSize / 2), this.y - (particleSize * (3 / 2)), particleSize, particleSize);
+            ctx.arc(this.x + particleSize, this.y - (particleSize * (3 / 2)), (particleSize / 4), 0, Math.PI * 2);
+            ctx.strokeStyle = "#aaaaaa";
+            ctx.lineWidth = 2;
+            ctx.stroke();
         }
     }
 }
@@ -319,7 +330,7 @@ function main() {
             setupTimer = delay;
             chargeChangeTimer = chargeChangeDelay;
 
-            hoverParticle = new Particle(mouseX, mouseY, placeMode);
+            hoverParticle = new Particle(mouseX, mouseY, placeMode, 0);
             overParticleBool = false;
             overParticle = -1;
 
@@ -386,7 +397,7 @@ function main() {
                 if ((!overParticleBool) && mouseDown && particleAddTimer > delay) {
                     if (mouseX > 0 && mouseX < 512 && mouseY > 0 && mouseY < 512) {
                         particleAddTimer = 0;
-                        particles.push(new Particle(mouseX, mouseY, placeMode));
+                        particles.push(new Particle(mouseX, mouseY, placeMode, 0));
                     }
                 }
 
@@ -424,9 +435,9 @@ function main() {
 
                     prevParticles = [];
                     for (var i = 0; i < particles.length; i++) {
-                        prevParticles.push(new Particle(particles[i].x, particles[i].y, particles[i].charge));
+                        prevParticles.push(new Particle(particles[i].x, particles[i].y, particles[i].charge, particles[i].locked));
                     }
-                    gameParticle = new Particle(spawnpoint.x + (spawnpoint.w / 2), spawnpoint.y + (spawnpoint.h / 2), -1);
+                    gameParticle = new Particle(spawnpoint.x + (spawnpoint.w / 2), spawnpoint.y + (spawnpoint.h / 2), -1, 0);
                     particles.push(gameParticle);
                     resetArrows();
                     arrowUpdateByParticles();
@@ -454,40 +465,45 @@ function main() {
 
                 // move particles
                 for (var i = 0; i < particles.length; i++) {
-                    if (Math.sign(particles[i].charge) == 1) {
-                        // bound speeds (so that particles don't move too fast)
-                        if (particles[i].forceR > maxParticleForce) {
-                            particles[i].x += (maxParticleForce * Math.cos(particles[i].forceTheta)) / protonWeightCorrection;
-                            particles[i].y -= (maxParticleForce * Math.sin(particles[i].forceTheta)) / protonWeightCorrection;
-                        } else if (particles[i].forceR < (-1 * maxParticleForce)) {
-                            particles[i].x += ((-1 * maxParticleForce) * Math.cos(particles[i].forceTheta)) / protonWeightCorrection;
-                            particles[i].y -= ((-1 * maxParticleForce) * Math.sin(particles[i].forceTheta)) / protonWeightCorrection;
-                        } else {
-                            particles[i].x += (particles[i].forceR * Math.cos(particles[i].forceTheta)) / protonWeightCorrection;
-                            particles[i].y -= (particles[i].forceR * Math.sin(particles[i].forceTheta)) / protonWeightCorrection;
-                        }
-                    } else if (Math.sign(particles[i].charge) == -1) {
-                        // bound speeds (so that particles don't move too fast)
-                        if (particles[i].forceR > maxParticleForce) {
-                            particles[i].x += (maxParticleForce * Math.cos(particles[i].forceTheta));
-                            particles[i].y -= (maxParticleForce * Math.sin(particles[i].forceTheta));
-                        } else if (particles[i].forceR < (-1 * maxParticleForce)) {
-                            particles[i].x += ((-1 * maxParticleForce) * Math.cos(particles[i].forceTheta));
-                            particles[i].y -= ((-1 * maxParticleForce) * Math.sin(particles[i].forceTheta));
-                        } else {
-                            particles[i].x += (particles[i].forceR * Math.cos(particles[i].forceTheta));
-                            particles[i].y -= (particles[i].forceR * Math.sin(particles[i].forceTheta));
+                    if (particles[i].locked == 0) {
+                        if (Math.sign(particles[i].charge) == 1) {
+                            // bound speeds (so that particles don't move too fast)
+                            if (particles[i].forceR > maxParticleForce) {
+                                particles[i].x += (maxParticleForce * Math.cos(particles[i].forceTheta)) / protonWeightCorrection;
+                                particles[i].y -= (maxParticleForce * Math.sin(particles[i].forceTheta)) / protonWeightCorrection;
+                            } else if (particles[i].forceR < (-1 * maxParticleForce)) {
+                                particles[i].x += ((-1 * maxParticleForce) * Math.cos(particles[i].forceTheta)) / protonWeightCorrection;
+                                particles[i].y -= ((-1 * maxParticleForce) * Math.sin(particles[i].forceTheta)) / protonWeightCorrection;
+                            } else {
+                                particles[i].x += (particles[i].forceR * Math.cos(particles[i].forceTheta)) / protonWeightCorrection;
+                                particles[i].y -= (particles[i].forceR * Math.sin(particles[i].forceTheta)) / protonWeightCorrection;
+                            }
+                        } else if (Math.sign(particles[i].charge) == -1) {
+                            // bound speeds (so that particles don't move too fast)
+                            if (particles[i].forceR > maxParticleForce) {
+                                particles[i].x += (maxParticleForce * Math.cos(particles[i].forceTheta));
+                                particles[i].y -= (maxParticleForce * Math.sin(particles[i].forceTheta));
+                            } else if (particles[i].forceR < (-1 * maxParticleForce)) {
+                                particles[i].x += ((-1 * maxParticleForce) * Math.cos(particles[i].forceTheta));
+                                particles[i].y -= ((-1 * maxParticleForce) * Math.sin(particles[i].forceTheta));
+                            } else {
+                                particles[i].x += (particles[i].forceR * Math.cos(particles[i].forceTheta));
+                                particles[i].y -= (particles[i].forceR * Math.sin(particles[i].forceTheta));
+                            }
                         }
                     }
                 }
 
-                // detect collion
+                // detect collision
                 for (var i = 0; i < particles.length; i++) {
                     for (var j = 0; j < particles.length; j++) {
                         if (i != j) {
                             if ((Math.sign(particles[i].charge) == 1 && Math.sign(particles[j].charge) == -1) || (Math.sign(particles[i].charge) == -1 && Math.sign(particles[j].charge) == 1)) {
                                 if (AABB(particles[i].x - particleSize, particles[i].y - particleSize, particleSize * 2, particleSize * 2, particles[j].x - particleSize, particles[j].y - particleSize, particleSize * 2, particleSize * 2)) {
+                                    particles[i].x = (particles[i].x + particles[j].x) / 2;
+                                    particles[i].y = (particles[i].y + particles[j].y) / 2;
                                     particles[i].charge = particles[i].charge + particles[j].charge;
+                                    particles[i].locked = particles[i].locked | particles[j].locked;
                                     particles.splice(j, 1);
                                 }
                             }
@@ -502,7 +518,7 @@ function main() {
                     delete gameParticle;
                     particles = [];
                     for (var i = 0; i < prevParticles.length; i++) {
-                        particles.push(new Particle(prevParticles[i].x, prevParticles[i].y, prevParticles[i].charge));
+                        particles.push(new Particle(prevParticles[i].x, prevParticles[i].y, prevParticles[i].charge, prevParticles[i].locked));
                     }
                     setup = true;
                 }
@@ -513,7 +529,7 @@ function main() {
                     delete gameParticle;
                     particles = [];
                     for (var i = 0; i < prevParticles.length; i++) {
-                        particles.push(new Particle(prevParticles[i].x, prevParticles[i].y, prevParticles[i].charge));
+                        particles.push(new Particle(prevParticles[i].x, prevParticles[i].y, prevParticles[i].charge, prevParticles[i].locked));
                     }
                     setup = true;
                 }
