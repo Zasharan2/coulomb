@@ -184,21 +184,22 @@ class Particle {
         ctx.beginPath();
         if (Math.sign(this.charge) == 1) {
             ctx.fillStyle = "#ff0000";
+            ctx.arc(this.x, this.y, particleSize, 0, 2 * Math.PI, false);
         } else if (Math.sign(this.charge) == -1) {
             ctx.fillStyle = "#0000ff";
+            ctx.arc(this.x, this.y, (particleSize * (2 / 3)), 0, 2 * Math.PI, false);
         }
-        ctx.arc(this.x, this.y, particleSize, 0, 2 * Math.PI, false);
         ctx.fill();
 
         ctx.beginPath();
-        ctx.font = "30px Comic Sans MS";
         ctx.fillStyle = "#ffffff";
         if (Math.sign(this.charge) == 1) {
+            ctx.font = "30px Comic Sans MS";
             ctx.fillText("+", this.x - 7, this.y + 8);
         } else if (Math.sign(this.charge) == -1) {
-            ctx.fillText("-", this.x - 6, this.y + 9);
+            ctx.font = "20px Comic Sans MS";
+            ctx.fillText("-", this.x - 4, this.y + 6);
         }
-
     }
 }
 
@@ -243,6 +244,8 @@ var setup;
 var setupTimer = delay;
 var chargeChangeTimer = chargeChangeDelay;
 
+var protonWeightCorrection = 15;
+
 var gameParticle;
 
 var level;
@@ -269,7 +272,7 @@ function arrowUpdateByParticles() {
                 arrows[k][j].theta = Math.atan2((yComp), (xComp));
             }
         }
-    }    
+    }
 }
 
 function main() {
@@ -456,16 +459,30 @@ function main() {
 
                 // move particles
                 for (var i = 0; i < particles.length; i++) {
-                    // bound speeds (so that particles don't move too fast)
-                    if (particles[i].forceR > maxParticleForce) {
-                        particles[i].x += (maxParticleForce * Math.cos(particles[i].forceTheta));
-                        particles[i].y -= (maxParticleForce * Math.sin(particles[i].forceTheta));
-                    } else if (particles[i].forceR < (-1 * maxParticleForce)) {
-                        particles[i].x += ((-1 * maxParticleForce) * Math.cos(particles[i].forceTheta));
-                        particles[i].y -= ((-1 * maxParticleForce) * Math.sin(particles[i].forceTheta));
-                    } else {
-                        particles[i].x += (particles[i].forceR * Math.cos(particles[i].forceTheta));
-                        particles[i].y -= (particles[i].forceR * Math.sin(particles[i].forceTheta));
+                    if (Math.sign(particles[i].charge) == 1) {
+                        // bound speeds (so that particles don't move too fast)
+                        if (particles[i].forceR > maxParticleForce) {
+                            particles[i].x += (maxParticleForce * Math.cos(particles[i].forceTheta)) / protonWeightCorrection;
+                            particles[i].y -= (maxParticleForce * Math.sin(particles[i].forceTheta)) / protonWeightCorrection;
+                        } else if (particles[i].forceR < (-1 * maxParticleForce)) {
+                            particles[i].x += ((-1 * maxParticleForce) * Math.cos(particles[i].forceTheta)) / protonWeightCorrection;
+                            particles[i].y -= ((-1 * maxParticleForce) * Math.sin(particles[i].forceTheta)) / protonWeightCorrection;
+                        } else {
+                            particles[i].x += (particles[i].forceR * Math.cos(particles[i].forceTheta)) / protonWeightCorrection;
+                            particles[i].y -= (particles[i].forceR * Math.sin(particles[i].forceTheta)) / protonWeightCorrection;
+                        }
+                    } else if (Math.sign(particles[i].charge) == -1) {
+                        // bound speeds (so that particles don't move too fast)
+                        if (particles[i].forceR > maxParticleForce) {
+                            particles[i].x += (maxParticleForce * Math.cos(particles[i].forceTheta));
+                            particles[i].y -= (maxParticleForce * Math.sin(particles[i].forceTheta));
+                        } else if (particles[i].forceR < (-1 * maxParticleForce)) {
+                            particles[i].x += ((-1 * maxParticleForce) * Math.cos(particles[i].forceTheta));
+                            particles[i].y -= ((-1 * maxParticleForce) * Math.sin(particles[i].forceTheta));
+                        } else {
+                            particles[i].x += (particles[i].forceR * Math.cos(particles[i].forceTheta));
+                            particles[i].y -= (particles[i].forceR * Math.sin(particles[i].forceTheta));
+                        }
                     }
                 }
 
