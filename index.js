@@ -325,8 +325,15 @@ function calculateChargeSums() {
 
 function chargeSumsOverLimits() {
     calculateChargeSums();
-    if ((positiveChargeSum > positiveChargeLimit) || (negativeChargeSum > negativeChargeLimit)) {
-        return true;
+    if (positiveChargeLimit != "infinity") {
+        if (positiveChargeSum > positiveChargeLimit) {
+            return true;
+        }
+    }
+    if (negativeChargeLimit != "infinity") {
+        if (negativeChargeSum > negativeChargeLimit) {
+            return true;
+        }
     }
     return false;
 }
@@ -376,8 +383,8 @@ function main() {
             overParticleBool = false;
             overParticle = -1;
 
-            positiveChargeLimit = 5;
-            negativeChargeLimit = 3;
+            positiveChargeLimit = "infinity";
+            negativeChargeLimit = "infinity";
             positiveChargeSum = 0;
             negativeChargeSum = 0;
 
