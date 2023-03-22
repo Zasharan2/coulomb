@@ -42,8 +42,12 @@ window.addEventListener("mouseup", function(event) {
 const SCREEN = {
     NULL_TO_TITLE: 0.1,
     TITLE: 1,
-    TITLE_TO_GAME: 1.2,
-    GAME: 2
+    TITLE_TO_TUTORIAL: 1.2,
+    TITLE_TO_GAME: 1.3,
+    TUTORIAL: 2,
+    TUTORIAL_TO_TITLE: 2.1,
+    TUTORIAL_TO_GAME: 2.3,
+    GAME: 3
 };
 
 var gameScreen = SCREEN.NULL_TO_TITLE;
@@ -118,6 +122,8 @@ class Button {
 };
 
 var playButton;
+var tutorialButton;
+var titleButtonClickTimer;
 
 var maxArrowLength = 17;
 var correction = 50000;
@@ -373,15 +379,93 @@ function drawChargeLeftDisplay() {
     }
 }
 
+function playParticles() {
+    // calculate forces on particles due to other particles
+    for (var i = 0; i < particles.length; i++) {
+        particles[i].forceR = 0;
+        particles[i].forceTheta = 0;
+        for (var j = 0; j < particles.length; j++) {
+            if (!(i == j)) {
+                var tempR = (correction * Math.abs(particles[i].charge * particles[j].charge)) / (Math.pow((particles[i].x - particles[j].x), 2) + Math.pow((particles[j].y - particles[i].y), 2));
+                var tempTheta = Math.atan2((Math.sign(particles[i].charge * particles[j].charge)) * (particles[j].y - particles[i].y), (Math.sign(particles[i].charge * particles[j].charge)) * (particles[i].x - particles[j].x));
+                var xComp = (tempR * Math.cos(tempTheta)) + (particles[i].forceR * Math.cos(particles[i].forceTheta));
+                var yComp = (tempR * Math.sin(tempTheta)) + (particles[i].forceR * Math.sin(particles[i].forceTheta));
+                particles[i].forceR = Math.sqrt(Math.pow((xComp), 2) + Math.pow((yComp), 2));
+                particles[i].forceTheta = Math.atan2((yComp), (xComp));
+            }
+        }
+    }
+
+    // move particles
+    for (var i = 0; i < particles.length; i++) {
+        if (particles[i].locked == 0) {
+            if (Math.sign(particles[i].charge) == 1) {
+                // bound speeds (so that particles don't move too fast)
+                if (particles[i].forceR > maxParticleForce) {
+                    particles[i].x += (maxParticleForce * Math.cos(particles[i].forceTheta)) / protonWeightCorrection;
+                    particles[i].y -= (maxParticleForce * Math.sin(particles[i].forceTheta)) / protonWeightCorrection;
+                } else if (particles[i].forceR < (-1 * maxParticleForce)) {
+                    particles[i].x += ((-1 * maxParticleForce) * Math.cos(particles[i].forceTheta)) / protonWeightCorrection;
+                    particles[i].y -= ((-1 * maxParticleForce) * Math.sin(particles[i].forceTheta)) / protonWeightCorrection;
+                } else {
+                    particles[i].x += (particles[i].forceR * Math.cos(particles[i].forceTheta)) / protonWeightCorrection;
+                    particles[i].y -= (particles[i].forceR * Math.sin(particles[i].forceTheta)) / protonWeightCorrection;
+                }
+            } else if (Math.sign(particles[i].charge) == -1) {
+                // bound speeds (so that particles don't move too fast)
+                if (particles[i].forceR > maxParticleForce) {
+                    particles[i].x += (maxParticleForce * Math.cos(particles[i].forceTheta));
+                    particles[i].y -= (maxParticleForce * Math.sin(particles[i].forceTheta));
+                } else if (particles[i].forceR < (-1 * maxParticleForce)) {
+                    particles[i].x += ((-1 * maxParticleForce) * Math.cos(particles[i].forceTheta));
+                    particles[i].y -= ((-1 * maxParticleForce) * Math.sin(particles[i].forceTheta));
+                } else {
+                    particles[i].x += (particles[i].forceR * Math.cos(particles[i].forceTheta));
+                    particles[i].y -= (particles[i].forceR * Math.sin(particles[i].forceTheta));
+                }
+            }
+        }
+    }
+
+    // detect collision
+    for (var i = 0; i < particles.length; i++) {
+        for (var j = 0; j < particles.length; j++) {
+            if (i != j) {
+                if ((Math.sign(particles[i].charge) == 1 && Math.sign(particles[j].charge) == -1) || (Math.sign(particles[i].charge) == -1 && Math.sign(particles[j].charge) == 1)) {
+                    if (AABB(particles[i].x - particleSize, particles[i].y - particleSize, particleSize * 2, particleSize * 2, particles[j].x - particleSize, particles[j].y - particleSize, particleSize * 2, particleSize * 2)) {
+                        particles[i].x = (particles[i].x + particles[j].x) / 2;
+                        particles[i].y = (particles[i].y + particles[j].y) / 2;
+                        particles[i].charge = particles[i].charge + particles[j].charge;
+                        particles[i].locked = particles[i].locked | particles[j].locked;
+                        particles.splice(j, 1);
+                    }
+                }
+            }
+        }
+    }
+}
+
+var tutorialTextOpacity;
+var tutorialProgress;
+var tutorialClickTimer;
+var tutorialParticle;
+var tutorialLocation;
+var tutorialChargeChanged;
+var tutorialParticleDeleted;
+
 function main() {
     switch (gameScreen) {
         case SCREEN.NULL_TO_TITLE: {
             playButton = new Button("PLAY", 185, 120, 115, 60, "#ff0000", "#880000", "#ffffff", "#ffffff", "#888888", "#ffffff");
+            tutorialButton = new Button("TUTORIAL", 125, 200, 240, 60, "#0000ff", "#000088", "#ffffff", "#ffffff", "#888888", "#ffffff");
+            titleButtonClickTimer = 0;
 
             gameScreen = SCREEN.TITLE;
             break;
         }
         case SCREEN.TITLE: {
+            titleButtonClickTimer++;
+
             // background
             ctx.beginPath();
             ctx.fillStyle = "#000000";
@@ -398,9 +482,1144 @@ function main() {
             playButton.update();
             playButton.render();
 
-            if (playButton.clicked) {
+            if (playButton.clicked && titleButtonClickTimer > delay) {
+                titleButtonClickTimer = 0;
                 gameScreen = SCREEN.TITLE_TO_GAME;
             }
+
+            // tutorial button
+            tutorialButton.update();
+            tutorialButton.render();
+
+            if (tutorialButton.clicked && titleButtonClickTimer > delay) {
+                titleButtonClickTimer = 0;
+                gameScreen = SCREEN.TITLE_TO_TUTORIAL;
+            }
+            break;
+        }
+        case SCREEN.TITLE_TO_TUTORIAL: {
+            tutorialProgress = 0;
+            tutorialTextOpacity = 0;
+            tutorialClickTimer = 0;
+
+            gameScreen = SCREEN.TUTORIAL;
+            break;
+        }
+        case SCREEN.TUTORIAL: {
+            tutorialClickTimer++;
+
+            // background
+            ctx.beginPath();
+            ctx.fillStyle = "#000000";
+            ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+            switch (tutorialProgress) {
+                case 0: {
+                    tutorialTextOpacity += (1 - tutorialTextOpacity) / 15;
+                    ctx.globalAlpha = tutorialTextOpacity;
+                    ctx.beginPath();
+                    ctx.font = "20px Comic Sans MS";
+                    ctx.fillStyle = "#ffffff";
+                    ctx.fillText("Welcome to Coulomb, a game about electric charges!", 10, 40);
+                    ctx.fillText("Click to continue →", 320, 500);
+                    ctx.globalAlpha = 1;
+
+                    if (mouseDown && mouseX > 0 && mouseX < 512 && mouseY > 0 && mouseY < 512 && tutorialClickTimer > delay) {
+                        tutorialTextOpacity = 0;
+                        tutorialClickTimer = 0;
+                        tutorialParticle = new Particle(256, 256, -1, 0, 1);
+                        tutorialProgress = 1;
+                    }
+                    break;
+                }
+                case 1: {
+                    tutorialTextOpacity += (1 - tutorialTextOpacity) / 15;
+                    ctx.globalAlpha = tutorialTextOpacity;
+                    ctx.beginPath();
+                    ctx.font = "20px Comic Sans MS";
+                    ctx.fillStyle = "#ffffff";
+                    ctx.fillText("The goal is to guide an electron to its destination.", 15, 40);
+                    tutorialParticle.render();
+                    ctx.font = "15px Comic Sans MS";
+                    ctx.fillText("(Electron)", 220, 300);
+                    ctx.globalAlpha = 1;
+
+                    if (mouseDown && mouseX > 0 && mouseX < 512 && mouseY > 0 && mouseY < 512 && tutorialClickTimer > delay) {
+                        tutorialTextOpacity = 0;
+                        tutorialClickTimer = 0;
+                        tutorialLocation = new Location(240, 240, 32, 32, "SPAWN");
+                        tutorialProgress = 2;
+                    }
+                    break;
+                }
+                case 2: {
+                    tutorialTextOpacity += (1 - tutorialTextOpacity) / 15;
+                    ctx.globalAlpha = tutorialTextOpacity;
+                    ctx.beginPath();
+                    ctx.font = "20px Comic Sans MS";
+                    ctx.fillStyle = "#ffffff";
+                    ctx.fillText("This square signifies where the electron will start.", 15, 40);
+                    ctx.globalAlpha = 0.3 * tutorialTextOpacity;
+                    tutorialLocation.render();
+                    ctx.globalAlpha = 1;
+
+                    if (mouseDown && mouseX > 0 && mouseX < 512 && mouseY > 0 && mouseY < 512 && tutorialClickTimer > delay) {
+                        tutorialTextOpacity = 0;
+                        tutorialClickTimer = 0;
+                        tutorialLocation.type = "GOAL";
+                        tutorialProgress = 3;
+                    }
+                    break;
+                }
+                case 3: {
+                    tutorialTextOpacity += (1 - tutorialTextOpacity) / 15;
+                    ctx.globalAlpha = tutorialTextOpacity;
+                    ctx.beginPath();
+                    ctx.font = "20px Comic Sans MS";
+                    ctx.fillStyle = "#ffffff";
+                    ctx.fillText("This square signifies the electron's goal.", 60, 40);
+                    ctx.globalAlpha = 0.3 * tutorialTextOpacity;
+                    tutorialLocation.render();
+                    ctx.globalAlpha = 1;
+
+                    if (mouseDown && mouseX > 0 && mouseX < 512 && mouseY > 0 && mouseY < 512 && tutorialClickTimer > delay) {
+                        tutorialTextOpacity = 0;
+                        tutorialClickTimer = 0;
+                        for (var i = 0; i < gridLength; i++) {
+                            for (var j = 0; j < gridLength; j++) {
+                                arrows[i][j] = new Arrow(10 + (i * ((canvasWidth - 20) / (gridLength - 1))), 10 + (j * ((canvasHeight - 20) / (gridLength - 1))), 0, 0);
+                            }
+                        }
+                        particles = [new Particle(240, 240, -1, 0, 1)];
+                        resetArrows();
+                        arrowUpdateByParticles();
+                        tutorialProgress = 4;
+                    }
+                    break;
+                }
+                case 4: {
+                    tutorialTextOpacity += (1 - tutorialTextOpacity) / 15;
+                    ctx.globalAlpha = tutorialTextOpacity;
+                    ctx.beginPath();
+                    ctx.font = "20px Comic Sans MS";
+                    ctx.fillStyle = "#ffffff";
+                    ctx.fillText("The screen will be filled with arrows.", 70, 40);
+                    ctx.fillText("These are electric field lines emitted by particles.", 15, 80);
+
+                    // render arrows
+                    for (var i = 0; i < gridLength; i++) {
+                        for (var j = 0; j < gridLength; j++) {
+                            arrows[i][j].render();
+                        }
+                    }
+
+                    // render particles
+                    for (var i = 0; i < particles.length; i++) {
+                        particles[i].render();
+                    }
+                    ctx.globalAlpha = 1;
+
+                    if (mouseDown && mouseX > 0 && mouseX < 512 && mouseY > 0 && mouseY < 512 && tutorialClickTimer > delay) {
+                        tutorialTextOpacity = 0;
+                        tutorialClickTimer = 0;
+                        tutorialProgress = 5;
+                    }
+                    break;
+                }
+                case 5: {
+                    tutorialTextOpacity += (1 - tutorialTextOpacity) / 15;
+                    ctx.globalAlpha = tutorialTextOpacity;
+                    ctx.beginPath();
+                    ctx.font = "20px Comic Sans MS";
+                    ctx.fillStyle = "#ffffff";
+                    ctx.fillText("The brightnesses of the arrows indicate strength.", 15, 40);
+                    ctx.fillText("Brighter lines are stronger than faint ones.", 45, 80);
+
+                    // render arrows
+                    for (var i = 0; i < gridLength; i++) {
+                        for (var j = 0; j < gridLength; j++) {
+                            arrows[i][j].render();
+                        }
+                    }
+
+                    // render particles
+                    for (var i = 0; i < particles.length; i++) {
+                        particles[i].render();
+                    }
+                    ctx.globalAlpha = 1;
+
+                    if (mouseDown && mouseX > 0 && mouseX < 512 && mouseY > 0 && mouseY < 512 && tutorialClickTimer > delay) {
+                        tutorialTextOpacity = 0;
+                        tutorialClickTimer = 0;
+                        tutorialProgress = 6;
+                    }
+                    break;
+                }
+                case 6: {
+                    tutorialTextOpacity += (1 - tutorialTextOpacity) / 15;
+                    ctx.globalAlpha = tutorialTextOpacity;
+                    ctx.beginPath();
+                    ctx.font = "20px Comic Sans MS";
+                    ctx.fillStyle = "#ffffff";
+                    ctx.fillText("With particles, these lines are stronger near them.", 15, 40);
+                    ctx.fillText("Further away, the lines are fainter and weaker.", 35, 80);
+
+                    // render arrows
+                    for (var i = 0; i < gridLength; i++) {
+                        for (var j = 0; j < gridLength; j++) {
+                            arrows[i][j].render();
+                        }
+                    }
+
+                    // render particles
+                    for (var i = 0; i < particles.length; i++) {
+                        particles[i].render();
+                    }
+                    ctx.globalAlpha = 1;
+
+                    if (mouseDown && mouseX > 0 && mouseX < 512 && mouseY > 0 && mouseY < 512 && tutorialClickTimer > delay) {
+                        tutorialTextOpacity = 0;
+                        tutorialClickTimer = 0;
+                        tutorialProgress = 7;
+                    }
+                    break;
+                }
+                case 7: {
+                    tutorialTextOpacity += (1 - tutorialTextOpacity) / 15;
+                    ctx.globalAlpha = tutorialTextOpacity;
+                    ctx.beginPath();
+                    ctx.font = "20px Comic Sans MS";
+                    ctx.fillStyle = "#ffffff";
+                    ctx.fillText("Arrows point towards negative charge.", 60, 40);
+
+                    // render arrows
+                    for (var i = 0; i < gridLength; i++) {
+                        for (var j = 0; j < gridLength; j++) {
+                            arrows[i][j].render();
+                        }
+                    }
+
+                    // render particles
+                    for (var i = 0; i < particles.length; i++) {
+                        particles[i].render();
+                    }
+                    ctx.globalAlpha = 1;
+
+                    if (mouseDown && mouseX > 0 && mouseX < 512 && mouseY > 0 && mouseY < 512 && tutorialClickTimer > delay) {
+                        tutorialTextOpacity = 0;
+                        tutorialClickTimer = 0;
+                        particles = [new Particle(240, 240, 1, 0, 1)];
+                        resetArrows();
+                        arrowUpdateByParticles();
+                        tutorialProgress = 8;
+                    }
+                    break;
+                }
+                case 8: {
+                    tutorialTextOpacity += (1 - tutorialTextOpacity) / 15;
+                    ctx.globalAlpha = tutorialTextOpacity;
+                    ctx.beginPath();
+                    ctx.font = "20px Comic Sans MS";
+                    ctx.fillStyle = "#ffffff";
+                    ctx.fillText("Arrows point away from positive charge.", 50, 40);
+
+                    // render arrows
+                    for (var i = 0; i < gridLength; i++) {
+                        for (var j = 0; j < gridLength; j++) {
+                            arrows[i][j].render();
+                        }
+                    }
+
+                    // render particles
+                    for (var i = 0; i < particles.length; i++) {
+                        particles[i].render();
+                    }
+                    ctx.globalAlpha = 1;
+
+                    if (mouseDown && mouseX > 0 && mouseX < 512 && mouseY > 0 && mouseY < 512 && tutorialClickTimer > delay) {
+                        tutorialTextOpacity = 0;
+                        tutorialClickTimer = 0;
+                        particles = [new Particle(210, 210, 1, 0, 1), new Particle(270, 270, -1, 0, 1)];
+                        resetArrows();
+                        arrowUpdateByParticles();
+                        tutorialProgress = 9;
+                    }
+                    break;
+                }
+                case 9: {
+                    tutorialTextOpacity += (1 - tutorialTextOpacity) / 15;
+                    ctx.globalAlpha = tutorialTextOpacity;
+                    ctx.beginPath();
+                    ctx.font = "20px Comic Sans MS";
+                    ctx.fillStyle = "#ffffff";
+                    ctx.fillText("Thus, they go away from positive into negative.", 20, 40);
+
+                    // render arrows
+                    for (var i = 0; i < gridLength; i++) {
+                        for (var j = 0; j < gridLength; j++) {
+                            arrows[i][j].render();
+                        }
+                    }
+
+                    // render particles
+                    for (var i = 0; i < particles.length; i++) {
+                        particles[i].render();
+                    }
+                    ctx.globalAlpha = 1;
+
+                    if (mouseDown && mouseX > 0 && mouseX < 512 && mouseY > 0 && mouseY < 512 && tutorialClickTimer > delay) {
+                        tutorialTextOpacity = 0;
+                        tutorialClickTimer = 0;
+                        particles = [new Particle(210, 180, 1, 0, 1), new Particle(270, 180, -1, 0, 1), new Particle(210, 380, 1, 0, 1), new Particle(270, 380, 1, 0, 1)];
+                        resetArrows();
+                        arrowUpdateByParticles();
+                        tutorialProgress = 10;
+                    }
+                    break;
+                }
+                case 10: {
+                    tutorialTextOpacity += (1 - tutorialTextOpacity) / 15;
+                    ctx.globalAlpha = tutorialTextOpacity;
+                    ctx.beginPath();
+                    ctx.font = "20px Comic Sans MS";
+                    ctx.fillStyle = "#ffffff";
+                    ctx.fillText("Positives follow arrows, negatives go the other way.", 15, 40);
+                    ctx.fillText("So, like charges repel, and opposite charges attract.", 10, 80);
+
+                    // render arrows
+                    for (var i = 0; i < gridLength; i++) {
+                        for (var j = 0; j < gridLength; j++) {
+                            arrows[i][j].render();
+                        }
+                    }
+
+                    // render particles
+                    for (var i = 0; i < particles.length; i++) {
+                        particles[i].render();
+                    }
+                    ctx.globalAlpha = 1;
+
+                    if (mouseDown && mouseX > 0 && mouseX < 512 && mouseY > 0 && mouseY < 512 && tutorialClickTimer > delay) {
+                        tutorialClickTimer = 0;
+                        tutorialProgress = 10.5;
+                    }
+                    break;
+                }
+                case 10.5: {
+                    ctx.beginPath();
+                    ctx.font = "20px Comic Sans MS";
+                    ctx.fillStyle = "#ffffff";
+                    ctx.fillText("Positives follow arrows, negatives go the other way.", 15, 40);
+                    ctx.fillText("So, like charges repel, and opposite charges attract.", 10, 80);
+
+                    resetArrows();
+                    arrowUpdateByParticles();
+
+                    playParticles();
+
+                    // render arrows
+                    for (var i = 0; i < gridLength; i++) {
+                        for (var j = 0; j < gridLength; j++) {
+                            arrows[i][j].render();
+                        }
+                    }
+
+                    // render particles
+                    for (var i = 0; i < particles.length; i++) {
+                        particles[i].render();
+                    }
+
+                    if (mouseDown && mouseX > 0 && mouseX < 512 && mouseY > 0 && mouseY < 512 && tutorialClickTimer > delay) {
+                        tutorialTextOpacity = 0;
+                        tutorialClickTimer = 0;
+                        particles = [new Particle(210, 180, -1, 0, 1), new Particle(370, 180, 1, 0, 1), new Particle(210, 220, -1, 0, 1)];
+                        resetArrows();
+                        arrowUpdateByParticles();
+                        tutorialProgress = 11;
+                    }
+                    break;
+                }
+                case 11: {
+                    tutorialTextOpacity += (1 - tutorialTextOpacity) / 15;
+                    ctx.globalAlpha = tutorialTextOpacity;
+                    ctx.beginPath();
+                    ctx.font = "20px Comic Sans MS";
+                    ctx.fillStyle = "#ffffff";
+                    ctx.fillText("Be careful, every charge affects every other charge.", 10, 40);
+
+                    // render arrows
+                    for (var i = 0; i < gridLength; i++) {
+                        for (var j = 0; j < gridLength; j++) {
+                            arrows[i][j].render();
+                        }
+                    }
+
+                    // render particles
+                    for (var i = 0; i < particles.length; i++) {
+                        particles[i].render();
+                    }
+                    ctx.globalAlpha = 1;
+
+                    if (mouseDown && mouseX > 0 && mouseX < 512 && mouseY > 0 && mouseY < 512 && tutorialClickTimer > delay) {
+                        tutorialClickTimer = 0;
+                        tutorialProgress = 11.5;
+                    }
+                    break;
+                }
+                case 11.5: {
+                    ctx.beginPath();
+                    ctx.font = "20px Comic Sans MS";
+                    ctx.fillStyle = "#ffffff";
+                    ctx.fillText("Be careful, every charge affects every other charge.", 10, 40);
+
+                    resetArrows();
+                    arrowUpdateByParticles();
+
+                    playParticles();
+
+                    // render arrows
+                    for (var i = 0; i < gridLength; i++) {
+                        for (var j = 0; j < gridLength; j++) {
+                            arrows[i][j].render();
+                        }
+                    }
+
+                    // render particles
+                    for (var i = 0; i < particles.length; i++) {
+                        particles[i].render();
+                    }
+
+                    if (mouseDown && mouseX > 0 && mouseX < 512 && mouseY > 0 && mouseY < 512 && tutorialClickTimer > delay) {
+                        tutorialTextOpacity = 0;
+                        tutorialClickTimer = 0;
+                        hoverParticle = new Particle(mouseX, mouseY, placeMode, 0, 1);
+                        positiveChargeLimit = 1;
+                        negativeChargeLimit = 0;
+                        positiveChargeSum = 0;
+                        negativeChargeSum = 0;
+                        overParticleBool = 0;
+                        particleAddTimer = 0;
+                        particles = [];
+                        resetArrows();
+                        tutorialProgress = 12;
+                    }
+                    break;
+                }
+                case 12: {
+                    particleAddTimer++;
+
+                    tutorialTextOpacity += (1 - tutorialTextOpacity) / 15;
+                    ctx.globalAlpha = tutorialTextOpacity;
+                    ctx.beginPath();
+                    ctx.font = "20px Comic Sans MS";
+                    ctx.fillStyle = "#ffffff";
+                    ctx.fillText("To place a particle, click anywhere on the screen.", 10, 40);
+
+                    if (particles.length == 0) {
+                        // hover particle movement
+                        hoverParticle.x = mouseX;
+                        hoverParticle.y = mouseY;
+                        hoverParticle.charge = placeMode;
+            
+                        // hover particle rendering
+                        ctx.globalAlpha = 0.5;
+                        hoverParticle.render();
+                        ctx.globalAlpha = 1;
+
+                        // arrow handling
+                        for (var i = 0; i < gridLength; i++) {
+                            for (var j = 0; j < gridLength; j++) {
+                                if (placeMode == 1) {
+                                    arrows[i][j].r = correction / ((Math.pow((arrows[i][j].x - mouseX), 2) + Math.pow((arrows[i][j].y - mouseY), 2)));
+                                    arrows[i][j].theta = Math.atan2((mouseY - arrows[i][j].y), (arrows[i][j].x - mouseX));
+                                } else if (placeMode == -1) {
+                                    arrows[i][j].r = correction / ((Math.pow((arrows[i][j].x - mouseX), 2) + Math.pow((arrows[i][j].y - mouseY), 2)));
+                                    arrows[i][j].theta = Math.atan2((-1 * (mouseY - arrows[i][j].y)), (-1 * (arrows[i][j].x - mouseX)));
+                                }
+                            }
+                        }
+
+                        // add particles
+                        if ((!overParticleBool) && mouseDown && particleAddTimer > delay) {
+                            if (mouseX > 0 && mouseX < 512 && mouseY > 0 && mouseY < 512) {
+                                particleAddTimer = 0;
+                                tutorialClickTimer = 0;
+                                particles.push(new Particle(mouseX, mouseY, placeMode, 0, 1));
+                                if (chargeSumsOverLimits()) {
+                                    particles.pop();
+                                }
+                            }
+                        }
+                    }
+
+                    if (particles.length != 0) {
+                        resetArrows();
+                    }
+                    arrowUpdateByParticleDisplay();
+                    
+                    // render arrows
+                    for (var i = 0; i < gridLength; i++) {
+                        for (var j = 0; j < gridLength; j++) {
+                            arrows[i][j].render();
+                        }
+                    }
+
+                    // render particles
+                    for (var i = 0; i < particles.length; i++) {
+                        particles[i].render();
+                    }
+                    ctx.globalAlpha = 1;
+
+                    if (mouseDown && particles.length > 0 && mouseX > 0 && mouseX < 512 && mouseY > 0 && mouseY < 512 && tutorialClickTimer > delay) {
+                        tutorialClickTimer = 0;
+                        particles = [];
+                        placeMode = 1;
+                        placeModeTimer = 0;
+                        positiveChargeLimit = 0;
+                        negativeChargeLimit = 1;
+                        positiveChargeSum = 0;
+                        negativeChargeSum = 0;
+                        tutorialProgress = 13;
+                    }
+                    break;
+                }
+                case 13: {
+                    particleAddTimer++;
+                    placeModeTimer++;
+
+                    tutorialTextOpacity += (1 - tutorialTextOpacity) / 15;
+                    ctx.globalAlpha = tutorialTextOpacity;
+                    ctx.beginPath();
+                    ctx.font = "20px Comic Sans MS";
+                    ctx.fillStyle = "#ffffff";
+                    ctx.fillText("Space to switch placing a proton vs. an electron.", 25, 40);
+
+                    // mode switching
+                    if (keys[" "] && placeModeTimer > delay) {
+                        placeModeTimer = 0;
+                        placeMode *= -1;
+                    }
+
+                    if (particles.length == 0) {
+                        // hover particle movement
+                        hoverParticle.x = mouseX;
+                        hoverParticle.y = mouseY;
+                        hoverParticle.charge = placeMode;
+            
+                        // hover particle rendering
+                        ctx.globalAlpha = 0.5;
+                        hoverParticle.render();
+                        ctx.globalAlpha = 1;
+
+                        // arrow handling
+                        for (var i = 0; i < gridLength; i++) {
+                            for (var j = 0; j < gridLength; j++) {
+                                if (placeMode == 1) {
+                                    arrows[i][j].r = correction / ((Math.pow((arrows[i][j].x - mouseX), 2) + Math.pow((arrows[i][j].y - mouseY), 2)));
+                                    arrows[i][j].theta = Math.atan2((mouseY - arrows[i][j].y), (arrows[i][j].x - mouseX));
+                                } else if (placeMode == -1) {
+                                    arrows[i][j].r = correction / ((Math.pow((arrows[i][j].x - mouseX), 2) + Math.pow((arrows[i][j].y - mouseY), 2)));
+                                    arrows[i][j].theta = Math.atan2((-1 * (mouseY - arrows[i][j].y)), (-1 * (arrows[i][j].x - mouseX)));
+                                }
+                            }
+                        }
+
+                        if (placeMode == -1) {
+                            // add particles
+                            if ((!overParticleBool) && mouseDown && particleAddTimer > delay) {
+                                if (mouseX > 0 && mouseX < 512 && mouseY > 0 && mouseY < 512) {
+                                    particleAddTimer = 0;
+                                    tutorialClickTimer = 0;
+                                    particles.push(new Particle(mouseX, mouseY, placeMode, 0, 1));
+                                    if (chargeSumsOverLimits()) {
+                                        particles.pop();
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if (particles.length != 0) {
+                        resetArrows();
+                    }
+                    arrowUpdateByParticleDisplay();
+                    
+                    // render arrows
+                    for (var i = 0; i < gridLength; i++) {
+                        for (var j = 0; j < gridLength; j++) {
+                            arrows[i][j].render();
+                        }
+                    }
+
+                    // render particles
+                    for (var i = 0; i < particles.length; i++) {
+                        particles[i].render();
+                    }
+                    ctx.globalAlpha = 1;
+
+                    if (mouseDown && particles.length > 0 && mouseX > 0 && mouseX < 512 && mouseY > 0 && mouseY < 512 && tutorialClickTimer > delay) {
+                        tutorialClickTimer = 0;
+                        particles = [];
+                        placeMode = 1;
+                        placeModeTimer = 0;
+                        particleAddTimer = 0;
+                        positiveChargeLimit = "infinity";
+                        negativeChargeLimit = "infinity";
+                        positiveChargeSum = 0;
+                        negativeChargeSum = 0;
+                        chargeChangeTimer = 0;
+                        overParticleBool = false;
+                        tutorialChargeChanged = false;
+                        tutorialProgress = 14;
+                    }
+                    break;
+                }
+                case 14: {
+                    particleAddTimer++;
+                    placeModeTimer++;
+                    chargeChangeTimer++;
+
+                    tutorialTextOpacity += (1 - tutorialTextOpacity) / 15;
+                    ctx.globalAlpha = tutorialTextOpacity;
+                    ctx.beginPath();
+                    ctx.font = "20px Comic Sans MS";
+                    ctx.fillStyle = "#ffffff";
+                    ctx.fillText("Use the up and down arrow keys to change the charge.", 5, 40);
+
+                    if (!overParticleBool) {
+                        // hover particle movement
+                        hoverParticle.x = mouseX;
+                        hoverParticle.y = mouseY;
+                        hoverParticle.charge = placeMode;
+            
+                        // hover particle rendering
+                        ctx.globalAlpha = 0.5;
+                        hoverParticle.render();
+                        ctx.globalAlpha = 1;
+                    }
+    
+                    // mode switching
+                    if (keys[" "] && placeModeTimer > delay) {
+                        placeModeTimer = 0;
+                        placeMode *= -1;
+                    }
+    
+                    // arrow handling
+                    for (var i = 0; i < gridLength; i++) {
+                        for (var j = 0; j < gridLength; j++) {
+                            if (placeMode == 1) {
+                                arrows[i][j].r = correction / ((Math.pow((arrows[i][j].x - mouseX), 2) + Math.pow((arrows[i][j].y - mouseY), 2)));
+                                arrows[i][j].theta = Math.atan2((mouseY - arrows[i][j].y), (arrows[i][j].x - mouseX));
+                            } else if (placeMode == -1) {
+                                arrows[i][j].r = correction / ((Math.pow((arrows[i][j].x - mouseX), 2) + Math.pow((arrows[i][j].y - mouseY), 2)));
+                                arrows[i][j].theta = Math.atan2((-1 * (mouseY - arrows[i][j].y)), (-1 * (arrows[i][j].x - mouseX)));
+                            }
+                        }
+                    }
+    
+                    // add particles
+                    if ((!overParticleBool) && (!tutorialChargeChanged) && mouseDown && particleAddTimer > delay) {
+                        if (mouseX > 0 && mouseX < 512 && mouseY > 0 && mouseY < 512) {
+                            particleAddTimer = 0;
+                            tutorialClickTimer = 0;
+                            particles.push(new Particle(mouseX, mouseY, placeMode, 0, 1));
+                            if (chargeSumsOverLimits()) {
+                                particles.pop();
+                            }
+                        }
+                    }
+    
+                    // detect overParticle
+                    overParticleBool = false;
+                    for (var i = 0; i < particles.length; i++) {
+                        if (AABB(mouseX - particleSize, mouseY - particleSize, particleSize * 2, particleSize * 2, particles[i].x - particleSize, particles[i].y - particleSize, particleSize * 2, particleSize * 2)) {
+                            overParticleBool = true;
+                            overParticle = i;
+                        }
+                    }
+    
+                    arrowUpdateByParticleDisplay();
+    
+                    // change charge
+                    if (overParticleBool && chargeChangeTimer > chargeChangeDelay && (particles[overParticle].modifiable == 1)) {
+                        chargeChangeTimer = 0;
+                        if (keys["ArrowUp"] || keys["w"]) {
+                            particles[overParticle].charge++;
+                            if (chargeSumsOverLimits()) {
+                                particles[overParticle].charge--;
+                            } else {
+                                tutorialChargeChanged = true;
+                            }
+                        }
+                        if (keys["ArrowDown"] || keys["s"]) {
+                            particles[overParticle].charge--;
+                            if (chargeSumsOverLimits()) {
+                                particles[overParticle].charge++;
+                            } else {
+                                tutorialChargeChanged = true;
+                            }
+                        }
+                    }
+    
+                    for (var i = 0; i < particles.length; i++) {
+                        particles[i].displayCharge += (particles[i].charge - particles[i].displayCharge) / 5;
+                    }
+    
+                    // remove particles
+                    if (overParticleBool && keys["Backspace"] && (particles[overParticle].modifiable == 1)) {
+                        particles.splice(overParticle, 1);
+                        overParticleBool = false;
+                    }
+    
+                    calculateChargeSums();
+    
+                    arrowUpdateByParticleDisplay();
+                    
+                    // render arrows
+                    for (var i = 0; i < gridLength; i++) {
+                        for (var j = 0; j < gridLength; j++) {
+                            arrows[i][j].render();
+                        }
+                    }
+
+                    // render particles
+                    for (var i = 0; i < particles.length; i++) {
+                        particles[i].render();
+                    }
+
+                    // write particle charge
+                    if (overParticleBool) {
+                        ctx.beginPath();
+                        ctx.font = "20px Comic Sans MS";
+                        ctx.fillStyle = "#ffffff";
+                        if (Math.sign(particles[overParticle].charge) == 1) {
+                            ctx.fillText("+" + particles[overParticle].charge, mouseX, mouseY);
+                        } else {
+                            ctx.fillText(particles[overParticle].charge, mouseX, mouseY);
+                        }
+                    }
+
+                    ctx.globalAlpha = 1;
+
+                    if (mouseDown && particles.length > 0 && tutorialChargeChanged && mouseX > 0 && mouseX < 512 && mouseY > 0 && mouseY < 512 && tutorialClickTimer > delay) {
+                        tutorialClickTimer = 0;
+                        particles = [];
+                        placeMode = 1;
+                        placeModeTimer = 0;
+                        particleAddTimer = 0;
+                        positiveChargeLimit = "infinity";
+                        negativeChargeLimit = "infinity";
+                        positiveChargeSum = 0;
+                        negativeChargeSum = 0;
+                        chargeChangeTimer = 0;
+                        overParticleBool = false;
+                        tutorialParticleDeleted = false;
+                        tutorialProgress = 15;
+                    }
+                    break;
+                }
+                case 15: {
+                    particleAddTimer++;
+                    placeModeTimer++;
+                    chargeChangeTimer++;
+
+                    tutorialTextOpacity += (1 - tutorialTextOpacity) / 15;
+                    ctx.globalAlpha = tutorialTextOpacity;
+                    ctx.beginPath();
+                    ctx.font = "20px Comic Sans MS";
+                    ctx.fillStyle = "#ffffff";
+                    ctx.fillText("Press backspace to delete a particle.", 65, 40);
+
+                    if (!overParticleBool) {
+                        // hover particle movement
+                        hoverParticle.x = mouseX;
+                        hoverParticle.y = mouseY;
+                        hoverParticle.charge = placeMode;
+            
+                        // hover particle rendering
+                        ctx.globalAlpha = 0.5;
+                        hoverParticle.render();
+                        ctx.globalAlpha = 1;
+                    }
+    
+                    // mode switching
+                    if (keys[" "] && placeModeTimer > delay) {
+                        placeModeTimer = 0;
+                        placeMode *= -1;
+                    }
+    
+                    // arrow handling
+                    for (var i = 0; i < gridLength; i++) {
+                        for (var j = 0; j < gridLength; j++) {
+                            if (placeMode == 1) {
+                                arrows[i][j].r = correction / ((Math.pow((arrows[i][j].x - mouseX), 2) + Math.pow((arrows[i][j].y - mouseY), 2)));
+                                arrows[i][j].theta = Math.atan2((mouseY - arrows[i][j].y), (arrows[i][j].x - mouseX));
+                            } else if (placeMode == -1) {
+                                arrows[i][j].r = correction / ((Math.pow((arrows[i][j].x - mouseX), 2) + Math.pow((arrows[i][j].y - mouseY), 2)));
+                                arrows[i][j].theta = Math.atan2((-1 * (mouseY - arrows[i][j].y)), (-1 * (arrows[i][j].x - mouseX)));
+                            }
+                        }
+                    }
+    
+                    // add particles
+                    if ((!overParticleBool) && (!tutorialParticleDeleted) && mouseDown && particleAddTimer > delay) {
+                        if (mouseX > 0 && mouseX < 512 && mouseY > 0 && mouseY < 512) {
+                            particleAddTimer = 0;
+                            tutorialClickTimer = 0;
+                            particles.push(new Particle(mouseX, mouseY, placeMode, 0, 1));
+                            if (chargeSumsOverLimits()) {
+                                particles.pop();
+                            }
+                        }
+                    }
+    
+                    // detect overParticle
+                    overParticleBool = false;
+                    for (var i = 0; i < particles.length; i++) {
+                        if (AABB(mouseX - particleSize, mouseY - particleSize, particleSize * 2, particleSize * 2, particles[i].x - particleSize, particles[i].y - particleSize, particleSize * 2, particleSize * 2)) {
+                            overParticleBool = true;
+                            overParticle = i;
+                        }
+                    }
+    
+                    arrowUpdateByParticleDisplay();
+    
+                    // change charge
+                    if (overParticleBool && chargeChangeTimer > chargeChangeDelay && (particles[overParticle].modifiable == 1)) {
+                        chargeChangeTimer = 0;
+                        if (keys["ArrowUp"] || keys["w"]) {
+                            particles[overParticle].charge++;
+                            if (chargeSumsOverLimits()) {
+                                particles[overParticle].charge--;
+                            } else {
+                                tutorialChargeChanged = true;
+                            }
+                        }
+                        if (keys["ArrowDown"] || keys["s"]) {
+                            particles[overParticle].charge--;
+                            if (chargeSumsOverLimits()) {
+                                particles[overParticle].charge++;
+                            } else {
+                                tutorialChargeChanged = true;
+                            }
+                        }
+                    }
+    
+                    for (var i = 0; i < particles.length; i++) {
+                        particles[i].displayCharge += (particles[i].charge - particles[i].displayCharge) / 5;
+                    }
+    
+                    // remove particles
+                    if (overParticleBool && keys["Backspace"] && (particles[overParticle].modifiable == 1)) {
+                        particles.splice(overParticle, 1);
+                        tutorialParticleDeleted = true;
+                        overParticleBool = false;
+                    }
+
+                    calculateChargeSums();
+    
+                    arrowUpdateByParticleDisplay();
+                    
+                    // render arrows
+                    for (var i = 0; i < gridLength; i++) {
+                        for (var j = 0; j < gridLength; j++) {
+                            arrows[i][j].render();
+                        }
+                    }
+
+                    // render particles
+                    for (var i = 0; i < particles.length; i++) {
+                        particles[i].render();
+                    }
+
+                    // write particle charge
+                    if (overParticleBool) {
+                        ctx.beginPath();
+                        ctx.font = "20px Comic Sans MS";
+                        ctx.fillStyle = "#ffffff";
+                        if (Math.sign(particles[overParticle].charge) == 1) {
+                            ctx.fillText("+" + particles[overParticle].charge, mouseX, mouseY);
+                        } else {
+                            ctx.fillText(particles[overParticle].charge, mouseX, mouseY);
+                        }
+                    }
+
+                    ctx.globalAlpha = 1;
+
+                    if (mouseDown && tutorialParticleDeleted && mouseX > 0 && mouseX < 512 && mouseY > 0 && mouseY < 512 && tutorialClickTimer > delay) {
+                        tutorialTextOpacity = 0;
+                        tutorialClickTimer = 0;
+                        particles = [new Particle(240, 240, -1, 1, 1), new Particle(380, 240, 1, 0, 1)];
+                        resetArrows();
+                        arrowUpdateByParticles();
+                        tutorialProgress = 16;
+                    }
+                    break;
+                }
+                case 16: {
+                    tutorialTextOpacity += (1 - tutorialTextOpacity) / 15;
+                    ctx.globalAlpha = tutorialTextOpacity;
+                    ctx.beginPath();
+                    ctx.font = "20px Comic Sans MS";
+                    ctx.fillStyle = "#ffffff";
+                    ctx.fillText("Particles with a lock symbol on them cannot move.", 15, 40);
+
+                    // render arrows
+                    for (var i = 0; i < gridLength; i++) {
+                        for (var j = 0; j < gridLength; j++) {
+                            arrows[i][j].render();
+                        }
+                    }
+
+                    // render particles
+                    for (var i = 0; i < particles.length; i++) {
+                        particles[i].render();
+                    }
+                    ctx.globalAlpha = 1;
+
+                    if (mouseDown && mouseX > 0 && mouseX < 512 && mouseY > 0 && mouseY < 512 && tutorialClickTimer > delay) {
+                        tutorialClickTimer = 0;
+                        tutorialProgress = 16.5;
+                    }
+                    break;
+                }
+                case 16.5: {
+                    tutorialTextOpacity += (1 - tutorialTextOpacity) / 15;
+                    ctx.globalAlpha = tutorialTextOpacity;
+                    ctx.beginPath();
+                    ctx.font = "20px Comic Sans MS";
+                    ctx.fillStyle = "#ffffff";
+                    ctx.fillText("Particles with a lock symbol on them cannot move.", 15, 40);
+
+                    resetArrows();
+                    arrowUpdateByParticles();
+
+                    playParticles();
+
+                    // render arrows
+                    for (var i = 0; i < gridLength; i++) {
+                        for (var j = 0; j < gridLength; j++) {
+                            arrows[i][j].render();
+                        }
+                    }
+
+                    // render particles
+                    for (var i = 0; i < particles.length; i++) {
+                        particles[i].render();
+                    }
+
+                    if (mouseDown && mouseX > 0 && mouseX < 512 && mouseY > 0 && mouseY < 512 && tutorialClickTimer > delay) {
+                        tutorialClickTimer = 0;
+                        particles = [new Particle(240, 240, 1, 0, 0), new Particle(240, 340, -1, 0, 0)];
+                        placeMode = 1;
+                        placeModeTimer = 0;
+                        particleAddTimer = 0;
+                        positiveChargeLimit = "infinity";
+                        negativeChargeLimit = "infinity";
+                        positiveChargeSum = 0;
+                        negativeChargeSum = 0;
+                        chargeChangeTimer = 0;
+                        overParticleBool = false;
+                        tutorialProgress = 17;
+                    }
+                    break;
+                }
+                case 17: {
+                    particleAddTimer++;
+                    placeModeTimer++;
+                    chargeChangeTimer++;
+
+                    tutorialTextOpacity += (1 - tutorialTextOpacity) / 15;
+                    ctx.globalAlpha = tutorialTextOpacity;
+                    ctx.beginPath();
+                    ctx.font = "20px Comic Sans MS";
+                    ctx.fillStyle = "#ffffff";
+                    ctx.fillText("You cannot change the charge of or delete level particles.", 5, 40);
+
+                    if (!overParticleBool) {
+                        // hover particle movement
+                        hoverParticle.x = mouseX;
+                        hoverParticle.y = mouseY;
+                        hoverParticle.charge = placeMode;
+            
+                        // hover particle rendering
+                        ctx.globalAlpha = 0.5;
+                        hoverParticle.render();
+                        ctx.globalAlpha = 1;
+                    }
+    
+                    // mode switching
+                    if (keys[" "] && placeModeTimer > delay) {
+                        placeModeTimer = 0;
+                        placeMode *= -1;
+                    }
+    
+                    // arrow handling
+                    for (var i = 0; i < gridLength; i++) {
+                        for (var j = 0; j < gridLength; j++) {
+                            if (placeMode == 1) {
+                                arrows[i][j].r = correction / ((Math.pow((arrows[i][j].x - mouseX), 2) + Math.pow((arrows[i][j].y - mouseY), 2)));
+                                arrows[i][j].theta = Math.atan2((mouseY - arrows[i][j].y), (arrows[i][j].x - mouseX));
+                            } else if (placeMode == -1) {
+                                arrows[i][j].r = correction / ((Math.pow((arrows[i][j].x - mouseX), 2) + Math.pow((arrows[i][j].y - mouseY), 2)));
+                                arrows[i][j].theta = Math.atan2((-1 * (mouseY - arrows[i][j].y)), (-1 * (arrows[i][j].x - mouseX)));
+                            }
+                        }
+                    }
+    
+                    // add particles
+                    if ((!overParticleBool) && mouseDown && particleAddTimer > delay) {
+                        if (mouseX > 0 && mouseX < 512 && mouseY > 0 && mouseY < 512) {
+                            particleAddTimer = 0;
+                            particles.push(new Particle(mouseX, mouseY, placeMode, 0, 1));
+                            if (chargeSumsOverLimits()) {
+                                particles.pop();
+                            }
+                        }
+                    }
+    
+                    // detect overParticle
+                    overParticleBool = false;
+                    for (var i = 0; i < particles.length; i++) {
+                        if (AABB(mouseX - particleSize, mouseY - particleSize, particleSize * 2, particleSize * 2, particles[i].x - particleSize, particles[i].y - particleSize, particleSize * 2, particleSize * 2)) {
+                            overParticleBool = true;
+                            overParticle = i;
+                        }
+                    }
+    
+                    arrowUpdateByParticleDisplay();
+    
+                    // change charge
+                    if (overParticleBool && chargeChangeTimer > chargeChangeDelay && (particles[overParticle].modifiable == 1)) {
+                        chargeChangeTimer = 0;
+                        if (keys["ArrowUp"] || keys["w"]) {
+                            particles[overParticle].charge++;
+                            if (chargeSumsOverLimits()) {
+                                particles[overParticle].charge--;
+                            } else {
+                                tutorialChargeChanged = true;
+                            }
+                        }
+                        if (keys["ArrowDown"] || keys["s"]) {
+                            particles[overParticle].charge--;
+                            if (chargeSumsOverLimits()) {
+                                particles[overParticle].charge++;
+                            } else {
+                                tutorialChargeChanged = true;
+                            }
+                        }
+                    }
+    
+                    for (var i = 0; i < particles.length; i++) {
+                        particles[i].displayCharge += (particles[i].charge - particles[i].displayCharge) / 5;
+                    }
+    
+                    // remove particles
+                    if (overParticleBool && keys["Backspace"] && (particles[overParticle].modifiable == 1)) {
+                        particles.splice(overParticle, 1);
+                        overParticleBool = false;
+                    }
+
+                    calculateChargeSums();
+    
+                    arrowUpdateByParticleDisplay();
+                    
+                    // render arrows
+                    for (var i = 0; i < gridLength; i++) {
+                        for (var j = 0; j < gridLength; j++) {
+                            arrows[i][j].render();
+                        }
+                    }
+
+                    // render particles
+                    for (var i = 0; i < particles.length; i++) {
+                        particles[i].render();
+                    }
+
+                    // write particle charge
+                    if (overParticleBool) {
+                        ctx.beginPath();
+                        ctx.font = "20px Comic Sans MS";
+                        ctx.fillStyle = "#ffffff";
+                        if (Math.sign(particles[overParticle].charge) == 1) {
+                            ctx.fillText("+" + particles[overParticle].charge, mouseX, mouseY);
+                        } else {
+                            ctx.fillText(particles[overParticle].charge, mouseX, mouseY);
+                        }
+                    }
+
+                    ctx.globalAlpha = 1;
+
+                    if (mouseDown && mouseX > 0 && mouseX < 512 && mouseY > 0 && mouseY < 512 && tutorialClickTimer > delay) {
+                        tutorialTextOpacity = 0;
+                        tutorialClickTimer = 0;
+                        particles = [];
+                        resetArrows();
+                        arrowUpdateByParticles();
+                        tutorialProgress = 18;
+                    }
+                    break;
+                }
+                case 18: {
+                    tutorialTextOpacity += (1 - tutorialTextOpacity) / 15;
+                    ctx.globalAlpha = tutorialTextOpacity;
+                    ctx.beginPath();
+                    ctx.font = "20px Comic Sans MS";
+                    ctx.fillStyle = "#ffffff";
+                    ctx.fillText("Lastly, use enter to test out your layout.", 45, 40);
+                    ctx.fillText("Have fun!", 180, 80);
+                    ctx.fillStyle = "#ff0000";
+                    ctx.fillText("-Zasharan2", 380, 480);
+                    ctx.globalAlpha = 1;
+
+                    if (mouseDown && mouseX > 0 && mouseX < 512 && mouseY > 0 && mouseY < 512 && tutorialClickTimer > delay) {
+                        tutorialTextOpacity = 0;
+                        tutorialClickTimer = 0;
+                        titleButtonClickTimer = 0;
+                        gameScreen = SCREEN.TUTORIAL_TO_TITLE;
+                    }
+                    break;
+                }
+                default: {
+                    break;
+                }
+            }
+            break;
+        }
+        case SCREEN.TUTORIAL_TO_TITLE: {
+            gameScreen = SCREEN.TITLE;
+            break;
+        }
+        case SCREEN.TUTORIAL_TO_GAME: {
+            for (var i = 0; i < gridLength; i++) {
+                for (var j = 0; j < gridLength; j++) {
+                    arrows[i][j] = new Arrow(10 + (i * ((canvasWidth - 20) / (gridLength - 1))), 10 + (j * ((canvasHeight - 20) / (gridLength - 1))), 0, 0);
+                }
+            }
+            placeModeTimer = delay;
+            particleAddTimer = 0;
+            setupTimer = delay;
+            chargeChangeTimer = chargeChangeDelay;
+
+            hoverParticle = new Particle(mouseX, mouseY, placeMode, 0, 1);
+            overParticleBool = false;
+            overParticle = -1;
+
+            positiveChargeLimit = "infinity";
+            negativeChargeLimit = "infinity";
+            positiveChargeSum = 0;
+            negativeChargeSum = 0;
+            positiveChargeLeftDisplayParticle = new Particle(30, 20, 1, 0, 1);
+            negativeChargeLeftDisplayParticle = new Particle(70, 20, -1, 0, 1);
+
+            spawnpoint = new Location(0, 240, 32, 32, "SPAWN");
+            goalpoint = new Location(240, 240, 32, 32, "GOAL");
+
+            setup = true;
+
+            level = 1;
+
+            gameScreen = SCREEN.GAME;
             break;
         }
         case SCREEN.TITLE_TO_GAME: {
@@ -553,69 +1772,7 @@ function main() {
                 resetArrows();
                 arrowUpdateByParticles();
 
-                // calculate forces on particles due to other particles
-                for (var i = 0; i < particles.length; i++) {
-                    particles[i].forceR = 0;
-                    particles[i].forceTheta = 0;
-                    for (var j = 0; j < particles.length; j++) {
-                        if (!(i == j)) {
-                            var tempR = (correction * Math.abs(particles[i].charge * particles[j].charge)) / (Math.pow((particles[i].x - particles[j].x), 2) + Math.pow((particles[j].y - particles[i].y), 2));
-                            var tempTheta = Math.atan2((Math.sign(particles[i].charge * particles[j].charge)) * (particles[j].y - particles[i].y), (Math.sign(particles[i].charge * particles[j].charge)) * (particles[i].x - particles[j].x));
-                            var xComp = (tempR * Math.cos(tempTheta)) + (particles[i].forceR * Math.cos(particles[i].forceTheta));
-                            var yComp = (tempR * Math.sin(tempTheta)) + (particles[i].forceR * Math.sin(particles[i].forceTheta));
-                            particles[i].forceR = Math.sqrt(Math.pow((xComp), 2) + Math.pow((yComp), 2));
-                            particles[i].forceTheta = Math.atan2((yComp), (xComp));
-                        }
-                    }
-                }
-
-                // move particles
-                for (var i = 0; i < particles.length; i++) {
-                    if (particles[i].locked == 0) {
-                        if (Math.sign(particles[i].charge) == 1) {
-                            // bound speeds (so that particles don't move too fast)
-                            if (particles[i].forceR > maxParticleForce) {
-                                particles[i].x += (maxParticleForce * Math.cos(particles[i].forceTheta)) / protonWeightCorrection;
-                                particles[i].y -= (maxParticleForce * Math.sin(particles[i].forceTheta)) / protonWeightCorrection;
-                            } else if (particles[i].forceR < (-1 * maxParticleForce)) {
-                                particles[i].x += ((-1 * maxParticleForce) * Math.cos(particles[i].forceTheta)) / protonWeightCorrection;
-                                particles[i].y -= ((-1 * maxParticleForce) * Math.sin(particles[i].forceTheta)) / protonWeightCorrection;
-                            } else {
-                                particles[i].x += (particles[i].forceR * Math.cos(particles[i].forceTheta)) / protonWeightCorrection;
-                                particles[i].y -= (particles[i].forceR * Math.sin(particles[i].forceTheta)) / protonWeightCorrection;
-                            }
-                        } else if (Math.sign(particles[i].charge) == -1) {
-                            // bound speeds (so that particles don't move too fast)
-                            if (particles[i].forceR > maxParticleForce) {
-                                particles[i].x += (maxParticleForce * Math.cos(particles[i].forceTheta));
-                                particles[i].y -= (maxParticleForce * Math.sin(particles[i].forceTheta));
-                            } else if (particles[i].forceR < (-1 * maxParticleForce)) {
-                                particles[i].x += ((-1 * maxParticleForce) * Math.cos(particles[i].forceTheta));
-                                particles[i].y -= ((-1 * maxParticleForce) * Math.sin(particles[i].forceTheta));
-                            } else {
-                                particles[i].x += (particles[i].forceR * Math.cos(particles[i].forceTheta));
-                                particles[i].y -= (particles[i].forceR * Math.sin(particles[i].forceTheta));
-                            }
-                        }
-                    }
-                }
-
-                // detect collision
-                for (var i = 0; i < particles.length; i++) {
-                    for (var j = 0; j < particles.length; j++) {
-                        if (i != j) {
-                            if ((Math.sign(particles[i].charge) == 1 && Math.sign(particles[j].charge) == -1) || (Math.sign(particles[i].charge) == -1 && Math.sign(particles[j].charge) == 1)) {
-                                if (AABB(particles[i].x - particleSize, particles[i].y - particleSize, particleSize * 2, particleSize * 2, particles[j].x - particleSize, particles[j].y - particleSize, particleSize * 2, particleSize * 2)) {
-                                    particles[i].x = (particles[i].x + particles[j].x) / 2;
-                                    particles[i].y = (particles[i].y + particles[j].y) / 2;
-                                    particles[i].charge = particles[i].charge + particles[j].charge;
-                                    particles[i].locked = particles[i].locked | particles[j].locked;
-                                    particles.splice(j, 1);
-                                }
-                            }
-                        }
-                    }
-                }
+                playParticles();
 
                 if (AABB(gameParticle.x - particleSize, gameParticle.y - particleSize, particleSize * 2, particleSize * 2, goalpoint.x, goalpoint.y, goalpoint.w, goalpoint.h)) {
                     setupTimer = 0;
