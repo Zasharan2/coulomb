@@ -46,7 +46,10 @@ const SCREEN = {
     TITLE_TO_GAME: 1.3,
     TUTORIAL: 2,
     TUTORIAL_TO_TITLE: 2.1,
-    GAME: 3
+    GAME: 3,
+    GAME_TO_LEVEL_NEXT: 3.4,
+    LEVEL_NEXT: 4,
+    LEVEL_NEXT_TO_GAME: 4.3
 };
 
 var gameScreen = SCREEN.NULL_TO_TITLE;
@@ -463,6 +466,11 @@ var tutorialParticle;
 var tutorialLocation;
 var tutorialChargeChanged;
 var tutorialParticleDeleted;
+
+var levelNextAnimationSize;
+var levelNextAnimationDistance;
+var levelNextAnimationParticle;
+var levelNextAnimationGoal;
 
 function main() {
     switch (gameScreen) {
@@ -1840,6 +1848,7 @@ function main() {
                     particles.push(gameParticle);
                     resetArrows();
                     arrowUpdateByParticles();
+                    overParticleBool = false;
                     setup = false;
                 }
             } else {
@@ -1849,15 +1858,7 @@ function main() {
                 playParticles();
 
                 if (AABB(gameParticle.x - particleSize, gameParticle.y - particleSize, particleSize * 2, particleSize * 2, goalpoint.x, goalpoint.y, goalpoint.w, goalpoint.h)) {
-                    setupTimer = 0;
-
-                    level++;
-                    delete gameParticle;
-                    particles = [];
-                    for (var i = 0; i < prevParticles.length; i++) {
-                        particles.push(new Particle(prevParticles[i].x, prevParticles[i].y, prevParticles[i].charge, prevParticles[i].locked, prevParticles[i].modifiable));
-                    }
-                    setup = true;
+                    gameScreen = SCREEN.GAME_TO_LEVEL_NEXT;
                 }
 
                 if (keys["Enter"] && setupTimer > delay) {
@@ -1902,19 +1903,87 @@ function main() {
                 } else {
                     chargeLeftDisplayOpacity += ((0 - chargeLeftDisplayOpacity) / 15);
                 }
+
                 ctx.globalAlpha = chargeLeftDisplayOpacity;
                 drawChargeLeftDisplay();
-                ctx.globalAlpha = 1;
+
                 if (!AABB(mouseX, mouseY, 1, 1, 0, 462, 140, 50)) {
                     levelDisplayOpacity += ((1 - levelDisplayOpacity) / 15);
                 } else {
                     levelDisplayOpacity += ((0 - levelDisplayOpacity) / 15);
                 }
+
                 ctx.globalAlpha = levelDisplayOpacity;
                 drawLevelDisplay();
                 ctx.globalAlpha = 1;
             }
 
+            break;
+        }
+        case SCREEN.GAME_TO_LEVEL_NEXT: {
+            levelNextAnimationSize = 2;
+            levelNextAnimationDistance = 100;
+            levelNextAnimationParticle = new Particle(206, 256, -1, 0, 0);
+            levelNextAnimationGoal = new Location(290, 240, 32, 32, "GOAL");
+            gameScreen = SCREEN.LEVEL_NEXT;
+            break;
+        }
+        case SCREEN.LEVEL_NEXT: {
+            // background
+            ctx.beginPath();
+            ctx.fillStyle = "#000000";
+            ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+            levelNextAnimationDistance += (0 - levelNextAnimationDistance) / 15;
+
+            levelNextAnimationParticle.x = 256 - (levelNextAnimationDistance / 2);
+            levelNextAnimationGoal.x = 240 + (levelNextAnimationDistance / 2);
+
+            if (levelNextAnimationDistance < 0.1) {
+                levelNextAnimationSize += (5 - levelNextAnimationSize) / 15;
+            }
+
+            ctx.save();
+            ctx.setTransform(levelNextAnimationSize, 0, 0, levelNextAnimationSize, -(levelNextAnimationSize-1)*256, -(levelNextAnimationSize-1)*256);
+            levelNextAnimationParticle.render();
+            ctx.globalAlpha = 0.3;
+            levelNextAnimationGoal.render();
+            ctx.globalAlpha = (levelNextAnimationSize - 2) / 3;
+            ctx.beginPath();
+            ctx.fillStyle = "#ffffff";
+            ctx.font = "10px Comic Sans MS";
+            ctx.fillText("Level Complete!", 220, 220);
+            ctx.font = "5px Comic Sans MS";
+            ctx.fillText("Click to proceed.", 236, 300);
+            ctx.globalAlpha = 1;
+            ctx.restore();
+
+            if (mouseDown && mouseX > 0 && mouseX < 512 && mouseY > 0 && mouseY < 512 && (((levelNextAnimationSize - 2) / 3) > 0.95)) {
+                gameScreen = SCREEN.LEVEL_NEXT_TO_GAME;
+            }
+
+            break;
+        }
+        case SCREEN.LEVEL_NEXT_TO_GAME: {
+            setupTimer = 0;
+            particleAddTimer = 0;
+            placeModeTimer = 0;
+            chargeChangeTimer = 0;
+
+            delete gameParticle;
+            level++;
+            switch (level) {
+                case 2: {
+                    particles = [new Particle(130, 150, 1, 0, 0)];
+                    break;
+                }
+                default: {
+                    particles = [];
+                    break;
+                }
+            }
+            setup = true;
+            gameScreen = SCREEN.GAME;
             break;
         }
         default: {
