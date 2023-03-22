@@ -261,6 +261,11 @@ var chargeChangeTimer = chargeChangeDelay;
 
 var protonWeightCorrection = 15;
 
+var positiveChargeLimit;
+var negativeChargeLimit;
+var positiveChargeSum;
+var negativeChargeSum;
+
 var gameParticle;
 
 var level;
@@ -304,6 +309,26 @@ function arrowUpdateByParticles() {
             }
         }
     }
+}
+
+function calculateChargeSums() {
+    positiveChargeSum = 0;
+    negativeChargeSum = 0;
+    for (var i = 0; i < particles.length; i++) {
+        if (Math.sign(particles[i].charge) == 1) {
+            positiveChargeSum += particles[i].charge;
+        } else if (Math.sign(particles[i].charge) == -1) {
+            negativeChargeSum += Math.abs(particles[i].charge);
+        }
+    }
+}
+
+function chargeSumsOverLimits() {
+    calculateChargeSums();
+    if ((positiveChargeSum > positiveChargeLimit) || (negativeChargeSum > negativeChargeLimit)) {
+        return true;
+    }
+    return false;
 }
 
 function main() {
@@ -350,6 +375,11 @@ function main() {
             hoverParticle = new Particle(mouseX, mouseY, placeMode, 0);
             overParticleBool = false;
             overParticle = -1;
+
+            positiveChargeLimit = 5;
+            negativeChargeLimit = 3;
+            positiveChargeSum = 0;
+            negativeChargeSum = 0;
 
             spawnpoint = new Location(0, 240, 32, 32, "SPAWN");
             goalpoint = new Location(240, 240, 32, 32, "GOAL");
@@ -415,6 +445,9 @@ function main() {
                     if (mouseX > 0 && mouseX < 512 && mouseY > 0 && mouseY < 512) {
                         particleAddTimer = 0;
                         particles.push(new Particle(mouseX, mouseY, placeMode, 0));
+                        if (chargeSumsOverLimits()) {
+                            particles.pop();
+                        }
                     }
                 }
 
@@ -434,9 +467,15 @@ function main() {
                     chargeChangeTimer = 0;
                     if (keys["ArrowUp"] || keys["w"]) {
                         particles[overParticle].charge++;
+                        if (chargeSumsOverLimits()) {
+                            particles[overParticle].charge--;
+                        }
                     }
                     if (keys["ArrowDown"] || keys["s"]) {
                         particles[overParticle].charge--;
+                        if (chargeSumsOverLimits()) {
+                            particles[overParticle].charge++;
+                        }
                     }
                 }
 
