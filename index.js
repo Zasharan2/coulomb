@@ -172,12 +172,13 @@ var arrows = Array(gridLength).fill().map(() => Array(gridLength).fill(0));;
 var particleSize = 10;
 
 class Particle {
-    constructor(x, y, charge, locked) {
+    constructor(x, y, charge, locked, modifiable) {
         this.x = x;
         this.y = y;
         this.charge = charge;
         this.displayCharge = charge;
         this.locked = locked;
+        this.modifiable = modifiable;
         this.forceR = 0;
         this.forceTheta = 0;
     }
@@ -315,10 +316,12 @@ function calculateChargeSums() {
     positiveChargeSum = 0;
     negativeChargeSum = 0;
     for (var i = 0; i < particles.length; i++) {
-        if (Math.sign(particles[i].charge) == 1) {
-            positiveChargeSum += particles[i].charge;
-        } else if (Math.sign(particles[i].charge) == -1) {
-            negativeChargeSum += Math.abs(particles[i].charge);
+        if (particles[i].modifiable == 1) {
+            if (Math.sign(particles[i].charge) == 1) {
+                positiveChargeSum += particles[i].charge;
+            } else if (Math.sign(particles[i].charge) == -1) {
+                negativeChargeSum += Math.abs(particles[i].charge);
+            }
         }
     }
 }
@@ -403,16 +406,16 @@ function main() {
             setupTimer = delay;
             chargeChangeTimer = chargeChangeDelay;
 
-            hoverParticle = new Particle(mouseX, mouseY, placeMode, 0);
+            hoverParticle = new Particle(mouseX, mouseY, placeMode, 0, 0);
             overParticleBool = false;
             overParticle = -1;
 
-            positiveChargeLimit = "infinity";
-            negativeChargeLimit = "infinity";
+            positiveChargeLimit = 5;
+            negativeChargeLimit = 3;
             positiveChargeSum = 0;
             negativeChargeSum = 0;
-            positiveChargeLeftDisplayParticle = new Particle(30, 20, 1, 0);
-            negativeChargeLeftDisplayParticle = new Particle(70, 20, -1, 0);
+            positiveChargeLeftDisplayParticle = new Particle(30, 20, 1, 0, 0);
+            negativeChargeLeftDisplayParticle = new Particle(70, 20, -1, 0, 0);
 
             spawnpoint = new Location(0, 240, 32, 32, "SPAWN");
             goalpoint = new Location(240, 240, 32, 32, "GOAL");
@@ -477,7 +480,7 @@ function main() {
                 if ((!overParticleBool) && mouseDown && particleAddTimer > delay) {
                     if (mouseX > 0 && mouseX < 512 && mouseY > 0 && mouseY < 512) {
                         particleAddTimer = 0;
-                        particles.push(new Particle(mouseX, mouseY, placeMode, 0));
+                        particles.push(new Particle(mouseX, mouseY, placeMode, 0, 1));
                         if (chargeSumsOverLimits()) {
                             particles.pop();
                         }
@@ -496,7 +499,7 @@ function main() {
                 arrowUpdateByParticleDisplay();
 
                 // change charge
-                if (overParticleBool && chargeChangeTimer > chargeChangeDelay) {
+                if (overParticleBool && chargeChangeTimer > chargeChangeDelay && (particles[overParticle].modifiable == 1)) {
                     chargeChangeTimer = 0;
                     if (keys["ArrowUp"] || keys["w"]) {
                         particles[overParticle].charge++;
@@ -517,7 +520,7 @@ function main() {
                 }
 
                 // remove particles
-                if (overParticleBool && keys["Backspace"]) {
+                if (overParticleBool && keys["Backspace"] && (particles[overParticle].modifiable == 1)) {
                     particles.splice(overParticle, 1);
                     overParticleBool = false;
                 }
@@ -530,9 +533,9 @@ function main() {
 
                     prevParticles = [];
                     for (var i = 0; i < particles.length; i++) {
-                        prevParticles.push(new Particle(particles[i].x, particles[i].y, particles[i].charge, particles[i].locked));
+                        prevParticles.push(new Particle(particles[i].x, particles[i].y, particles[i].charge, particles[i].locked, particles[i].modifiable));
                     }
-                    gameParticle = new Particle(spawnpoint.x + (spawnpoint.w / 2), spawnpoint.y + (spawnpoint.h / 2), -1, 0);
+                    gameParticle = new Particle(spawnpoint.x + (spawnpoint.w / 2), spawnpoint.y + (spawnpoint.h / 2), -1, 0, 0);
                     particles.push(gameParticle);
                     resetArrows();
                     arrowUpdateByParticles();
@@ -613,7 +616,7 @@ function main() {
                     delete gameParticle;
                     particles = [];
                     for (var i = 0; i < prevParticles.length; i++) {
-                        particles.push(new Particle(prevParticles[i].x, prevParticles[i].y, prevParticles[i].charge, prevParticles[i].locked));
+                        particles.push(new Particle(prevParticles[i].x, prevParticles[i].y, prevParticles[i].charge, prevParticles[i].locked, prevParticles[i].modifiable));
                     }
                     setup = true;
                 }
@@ -624,7 +627,7 @@ function main() {
                     delete gameParticle;
                     particles = [];
                     for (var i = 0; i < prevParticles.length; i++) {
-                        particles.push(new Particle(prevParticles[i].x, prevParticles[i].y, prevParticles[i].charge, prevParticles[i].locked));
+                        particles.push(new Particle(prevParticles[i].x, prevParticles[i].y, prevParticles[i].charge, prevParticles[i].locked, prevParticles[i].modifiable));
                     }
                     setup = true;
                 }
