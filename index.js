@@ -186,10 +186,18 @@ class Particle {
     render() {
         ctx.beginPath();
         if (Math.sign(this.charge) == 1) {
-            ctx.fillStyle = "#ff0000";
+            if (this.modifiable == 1) {
+                ctx.fillStyle = "#ff0000";
+            } else if (this.modifiable == 0) {
+                ctx.fillStyle = "#ff8800";
+            }
             ctx.arc(this.x, this.y, particleSize, 0, 2 * Math.PI, false);
         } else if (Math.sign(this.charge) == -1) {
-            ctx.fillStyle = "#0000ff";
+            if (this.modifiable == 1) {
+                ctx.fillStyle = "#0000ff";
+            } else if (this.modifiable == 0) {
+                ctx.fillStyle = "#0088ff";
+            }
             ctx.arc(this.x, this.y, (particleSize * (2 / 3)), 0, 2 * Math.PI, false);
         } else if (Math.sign(this.charge) == 0) {
             ctx.fillStyle = "#ffffff";
@@ -406,7 +414,7 @@ function main() {
             setupTimer = delay;
             chargeChangeTimer = chargeChangeDelay;
 
-            hoverParticle = new Particle(mouseX, mouseY, placeMode, 0, 0);
+            hoverParticle = new Particle(mouseX, mouseY, placeMode, 0, 1);
             overParticleBool = false;
             overParticle = -1;
 
@@ -414,8 +422,8 @@ function main() {
             negativeChargeLimit = 3;
             positiveChargeSum = 0;
             negativeChargeSum = 0;
-            positiveChargeLeftDisplayParticle = new Particle(30, 20, 1, 0, 0);
-            negativeChargeLeftDisplayParticle = new Particle(70, 20, -1, 0, 0);
+            positiveChargeLeftDisplayParticle = new Particle(30, 20, 1, 0, 1);
+            negativeChargeLeftDisplayParticle = new Particle(70, 20, -1, 0, 1);
 
             spawnpoint = new Location(0, 240, 32, 32, "SPAWN");
             goalpoint = new Location(240, 240, 32, 32, "GOAL");
