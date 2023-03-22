@@ -338,6 +338,30 @@ function chargeSumsOverLimits() {
     return false;
 }
 
+var positiveChargeLeftDisplayParticle;
+var negativeChargeLeftDisplayParticle;
+
+function drawChargeLeftDisplay() {
+    ctx.beginPath();
+    ctx.fillStyle = "#333333";
+    ctx.fillRect(0, 0, 100, 50);
+    positiveChargeLeftDisplayParticle.render();
+    negativeChargeLeftDisplayParticle.render();
+    ctx.beginPath();
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "15px Comic Sans MS";
+    if (positiveChargeLimit == "infinity") {
+        ctx.fillText("∞", 25, 45);
+    } else {
+        ctx.fillText((positiveChargeLimit - positiveChargeSum), 25, 45);
+    }
+    if (negativeChargeLimit == "infinity") {
+        ctx.fillText("∞", 65, 45);
+    } else {
+        ctx.fillText((negativeChargeLimit - negativeChargeSum), 65, 45);
+    }
+}
+
 function main() {
     switch (gameScreen) {
         case SCREEN.NULL_TO_TITLE: {
@@ -387,6 +411,8 @@ function main() {
             negativeChargeLimit = "infinity";
             positiveChargeSum = 0;
             negativeChargeSum = 0;
+            positiveChargeLeftDisplayParticle = new Particle(30, 20, 1, 0);
+            negativeChargeLeftDisplayParticle = new Particle(70, 20, -1, 0);
 
             spawnpoint = new Location(0, 240, 32, 32, "SPAWN");
             goalpoint = new Location(240, 240, 32, 32, "GOAL");
@@ -495,6 +521,8 @@ function main() {
                     particles.splice(overParticle, 1);
                     overParticleBool = false;
                 }
+
+                calculateChargeSums();
 
                 // switch setup mode
                 if (keys["Enter"] && setupTimer > delay) {
@@ -625,6 +653,10 @@ function main() {
                     } else {
                         ctx.fillText(particles[overParticle].charge, mouseX, mouseY);
                     }
+                }
+
+                if (!AABB(mouseX, mouseY, 1, 1, 0, 0, 100, 50)) {
+                    drawChargeLeftDisplay();
                 }
             }
 
