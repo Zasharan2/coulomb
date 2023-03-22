@@ -357,6 +357,7 @@ function chargeSumsOverLimits() {
 var positiveChargeLeftDisplayParticle;
 var negativeChargeLeftDisplayParticle;
 
+var chargeLeftDisplayOpacity;
 function drawChargeLeftDisplay() {
     ctx.beginPath();
     ctx.fillStyle = "#333333";
@@ -376,6 +377,17 @@ function drawChargeLeftDisplay() {
     } else {
         ctx.fillText((negativeChargeLimit - negativeChargeSum), 65, 45);
     }
+}
+
+var levelDisplayOpacity;
+function drawLevelDisplay() {
+    ctx.beginPath();
+    ctx.fillStyle = "#333333";
+    ctx.fillRect(0, 462, 140, 50);
+    ctx.beginPath();
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "30px Comic Sans MS";
+    ctx.fillText(`Level: ${level}`, 5, 500)
 }
 
 function playParticles() {
@@ -1701,6 +1713,9 @@ function main() {
             positiveChargeLeftDisplayParticle = new Particle(30, 20, 1, 0, 1);
             negativeChargeLeftDisplayParticle = new Particle(70, 20, -1, 0, 1);
 
+            chargeLeftDisplayOpacity = 1;
+            levelDisplayOpacity = 1;
+
             particles = [];
 
             spawnpoint = new Location(0, 240, 32, 32, "SPAWN");
@@ -1883,8 +1898,21 @@ function main() {
                 }
 
                 if (!AABB(mouseX, mouseY, 1, 1, 0, 0, 100, 50)) {
-                    drawChargeLeftDisplay();
+                    chargeLeftDisplayOpacity += ((1 - chargeLeftDisplayOpacity) / 15);
+                } else {
+                    chargeLeftDisplayOpacity += ((0 - chargeLeftDisplayOpacity) / 15);
                 }
+                ctx.globalAlpha = chargeLeftDisplayOpacity;
+                drawChargeLeftDisplay();
+                ctx.globalAlpha = 1;
+                if (!AABB(mouseX, mouseY, 1, 1, 0, 462, 140, 50)) {
+                    levelDisplayOpacity += ((1 - levelDisplayOpacity) / 15);
+                } else {
+                    levelDisplayOpacity += ((0 - levelDisplayOpacity) / 15);
+                }
+                ctx.globalAlpha = levelDisplayOpacity;
+                drawLevelDisplay();
+                ctx.globalAlpha = 1;
             }
 
             break;
