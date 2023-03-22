@@ -1435,18 +1435,6 @@ function main() {
                     ctx.font = "20px Comic Sans MS";
                     ctx.fillStyle = "#ffffff";
                     ctx.fillText("You cannot change the charge of or delete level particles.", 5, 40);
-
-                    if (!overParticleBool) {
-                        // hover particle movement
-                        hoverParticle.x = mouseX;
-                        hoverParticle.y = mouseY;
-                        hoverParticle.charge = placeMode;
-            
-                        // hover particle rendering
-                        ctx.globalAlpha = 0.5;
-                        hoverParticle.render();
-                        ctx.globalAlpha = 1;
-                    }
     
                     // mode switching
                     if (keys[" "] && placeModeTimer > delay) {
@@ -1463,17 +1451,6 @@ function main() {
                             } else if (placeMode == -1) {
                                 arrows[i][j].r = correction / ((Math.pow((arrows[i][j].x - mouseX), 2) + Math.pow((arrows[i][j].y - mouseY), 2)));
                                 arrows[i][j].theta = Math.atan2((-1 * (mouseY - arrows[i][j].y)), (-1 * (arrows[i][j].x - mouseX)));
-                            }
-                        }
-                    }
-    
-                    // add particles
-                    if ((!overParticleBool) && mouseDown && particleAddTimer > delay) {
-                        if (mouseX > 0 && mouseX < 512 && mouseY > 0 && mouseY < 512) {
-                            particleAddTimer = 0;
-                            particles.push(new Particle(mouseX, mouseY, placeMode, 0, 1));
-                            if (chargeSumsOverLimits()) {
-                                particles.pop();
                             }
                         }
                     }
@@ -1553,9 +1530,9 @@ function main() {
                     if (mouseDown && mouseX > 0 && mouseX < 512 && mouseY > 0 && mouseY < 512 && tutorialClickTimer > delay) {
                         tutorialTextOpacity = 0;
                         tutorialClickTimer = 0;
-                        particles = [];
-                        resetArrows();
-                        arrowUpdateByParticles();
+                        // particles = [];
+                        // resetArrows();
+                        // arrowUpdateByParticles();
                         tutorialProgress = 18;
                     }
                     break;
@@ -1567,7 +1544,69 @@ function main() {
                     ctx.font = "20px Comic Sans MS";
                     ctx.fillStyle = "#ffffff";
                     ctx.fillText("Lastly, use enter to test out your layout.", 45, 40);
-                    ctx.fillText("Have fun!", 180, 80);
+
+                    // render arrows
+                    for (var i = 0; i < gridLength; i++) {
+                        for (var j = 0; j < gridLength; j++) {
+                            arrows[i][j].render();
+                        }
+                    }
+
+                    // render particles
+                    for (var i = 0; i < particles.length; i++) {
+                        particles[i].render();
+                    }
+                    ctx.globalAlpha = 1;
+
+                    if (keys["Enter"] && tutorialClickTimer > delay) {
+                        tutorialClickTimer = 0;
+                        tutorialProgress = 18.5;
+                    }
+                    break;
+                }
+                case 18.5: {
+                    ctx.beginPath();
+                    ctx.font = "20px Comic Sans MS";
+                    ctx.fillStyle = "#ffffff";
+                    ctx.fillText("Lastly, use enter to test out your layout.", 45, 40);
+
+                    resetArrows();
+                    arrowUpdateByParticles();
+
+                    playParticles();
+
+                    // render arrows
+                    for (var i = 0; i < gridLength; i++) {
+                        for (var j = 0; j < gridLength; j++) {
+                            arrows[i][j].render();
+                        }
+                    }
+
+                    // render particles
+                    for (var i = 0; i < particles.length; i++) {
+                        particles[i].render();
+                    }
+
+                    if (mouseDown && mouseX > 0 && mouseX < 512 && mouseY > 0 && mouseY < 512 && tutorialClickTimer > delay) {
+                        tutorialClickTimer = 0;
+                        particles = [];
+                        resetArrows();
+                        arrowUpdateByParticles();
+                        tutorialProgress = 19;
+                    }
+                    break;
+                }
+                case 19: {
+                    tutorialTextOpacity += (1 - tutorialTextOpacity) / 15;
+                    ctx.globalAlpha = tutorialTextOpacity;
+                    ctx.beginPath();
+                    ctx.font = "50px Comic Sans MS";
+                    ctx.fillStyle = "#ffffff";
+                    ctx.save();
+                    ctx.rotate(0.3);
+                    ctx.fillText("Have fun!", 180, 180);
+                    ctx.restore();
+                    ctx.font = "20px Comic Sans MS";
                     ctx.fillStyle = "#ff0000";
                     ctx.fillText("-Zasharan2", 380, 480);
                     ctx.globalAlpha = 1;
