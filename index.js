@@ -418,8 +418,8 @@ function main() {
             overParticleBool = false;
             overParticle = -1;
 
-            positiveChargeLimit = 5;
-            negativeChargeLimit = 3;
+            positiveChargeLimit = "infinity";
+            negativeChargeLimit = "infinity";
             positiveChargeSum = 0;
             negativeChargeSum = 0;
             positiveChargeLeftDisplayParticle = new Particle(30, 20, 1, 0, 1);
