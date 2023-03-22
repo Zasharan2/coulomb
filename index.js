@@ -176,6 +176,7 @@ class Particle {
         this.x = x;
         this.y = y;
         this.charge = charge;
+        this.displayCharge = charge;
         this.locked = locked;
         this.forceR = 0;
         this.forceTheta = 0;
@@ -269,6 +270,22 @@ function resetArrows() {
         for (var j = 0; j < gridLength; j++) {
             arrows[i][j].r = 0;
             arrows[i][j].theta = 0;
+        }
+    }
+}
+
+function arrowUpdateByParticleDisplay() {
+    // update arrows based on particles' display charges
+    for (var i = 0; i < particles.length; i++) {
+        for (var k = 0; k < gridLength; k++) {
+            for (var j = 0; j < gridLength; j++) {
+                var tempR = (correction * Math.abs(particles[i].displayCharge)) / ((Math.pow((arrows[k][j].x - particles[i].x), 2) + Math.pow((particles[i].y - arrows[k][j].y), 2)));
+                var tempTheta = Math.atan2((Math.sign(particles[i].displayCharge)) * (particles[i].y - arrows[k][j].y), (Math.sign(particles[i].displayCharge)) * (arrows[k][j].x - particles[i].x));
+                var xComp = (tempR * Math.cos(tempTheta)) + (arrows[k][j].r * Math.cos(arrows[k][j].theta));
+                var yComp = (tempR * Math.sin(tempTheta)) + (arrows[k][j].r * Math.sin(arrows[k][j].theta));
+                arrows[k][j].r = Math.sqrt(Math.pow((xComp), 2) + Math.pow((yComp), 2));
+                arrows[k][j].theta = Math.atan2((yComp), (xComp));
+            }
         }
     }
 }
@@ -410,7 +427,7 @@ function main() {
                     }
                 }
 
-                arrowUpdateByParticles();
+                arrowUpdateByParticleDisplay();
 
                 // change charge
                 if (overParticleBool && chargeChangeTimer > chargeChangeDelay) {
@@ -421,6 +438,10 @@ function main() {
                     if (keys["ArrowDown"] || keys["s"]) {
                         particles[overParticle].charge--;
                     }
+                }
+
+                for (var i = 0; i < particles.length; i++) {
+                    particles[i].displayCharge += (particles[i].charge - particles[i].displayCharge) / 5;
                 }
 
                 // remove particles
