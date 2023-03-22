@@ -46,7 +46,6 @@ const SCREEN = {
     TITLE_TO_GAME: 1.3,
     TUTORIAL: 2,
     TUTORIAL_TO_TITLE: 2.1,
-    TUTORIAL_TO_GAME: 2.3,
     GAME: 3
 };
 
@@ -1680,38 +1679,6 @@ function main() {
             gameScreen = SCREEN.TITLE;
             break;
         }
-        case SCREEN.TUTORIAL_TO_GAME: {
-            for (var i = 0; i < gridLength; i++) {
-                for (var j = 0; j < gridLength; j++) {
-                    arrows[i][j] = new Arrow(10 + (i * ((canvasWidth - 20) / (gridLength - 1))), 10 + (j * ((canvasHeight - 20) / (gridLength - 1))), 0, 0);
-                }
-            }
-            placeModeTimer = delay;
-            particleAddTimer = 0;
-            setupTimer = delay;
-            chargeChangeTimer = chargeChangeDelay;
-
-            hoverParticle = new Particle(mouseX, mouseY, placeMode, 0, 1);
-            overParticleBool = false;
-            overParticle = -1;
-
-            positiveChargeLimit = "infinity";
-            negativeChargeLimit = "infinity";
-            positiveChargeSum = 0;
-            negativeChargeSum = 0;
-            positiveChargeLeftDisplayParticle = new Particle(30, 20, 1, 0, 1);
-            negativeChargeLeftDisplayParticle = new Particle(70, 20, -1, 0, 1);
-
-            spawnpoint = new Location(0, 240, 32, 32, "SPAWN");
-            goalpoint = new Location(240, 240, 32, 32, "GOAL");
-
-            setup = true;
-
-            level = 1;
-
-            gameScreen = SCREEN.GAME;
-            break;
-        }
         case SCREEN.TITLE_TO_GAME: {
             for (var i = 0; i < gridLength; i++) {
                 for (var j = 0; j < gridLength; j++) {
@@ -1733,6 +1700,8 @@ function main() {
             negativeChargeSum = 0;
             positiveChargeLeftDisplayParticle = new Particle(30, 20, 1, 0, 1);
             negativeChargeLeftDisplayParticle = new Particle(70, 20, -1, 0, 1);
+
+            particles = [];
 
             spawnpoint = new Location(0, 240, 32, 32, "SPAWN");
             goalpoint = new Location(240, 240, 32, 32, "GOAL");
