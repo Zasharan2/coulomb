@@ -538,7 +538,7 @@ function main() {
                     ctx.beginPath();
                     ctx.font = "20px Comic Sans MS";
                     ctx.fillStyle = "#ffffff";
-                    ctx.fillText("The goal is to guide an electron to its destination.", 15, 40);
+                    ctx.fillText("The goal is to guide an electron to its destination.", 20, 40);
                     tutorialParticle.render();
                     ctx.font = "15px Comic Sans MS";
                     ctx.fillText("(Electron)", 220, 300);
@@ -662,7 +662,7 @@ function main() {
                     ctx.font = "20px Comic Sans MS";
                     ctx.fillStyle = "#ffffff";
                     ctx.fillText("With particles, these lines are stronger near them.", 15, 40);
-                    ctx.fillText("Further away, the lines are fainter and weaker.", 35, 80);
+                    ctx.fillText("Further away, the lines are fainter and weaker.", 30, 80);
 
                     // render arrows
                     for (var i = 0; i < gridLength; i++) {
@@ -752,7 +752,7 @@ function main() {
                     ctx.beginPath();
                     ctx.font = "20px Comic Sans MS";
                     ctx.fillStyle = "#ffffff";
-                    ctx.fillText("Thus, they go away from positive into negative.", 20, 40);
+                    ctx.fillText("Thus, they go away from positive into negative.", 30, 40);
 
                     // render arrows
                     for (var i = 0; i < gridLength; i++) {
@@ -770,7 +770,7 @@ function main() {
                     if (mouseDown && mouseX > 0 && mouseX < 512 && mouseY > 0 && mouseY < 512 && tutorialClickTimer > delay) {
                         tutorialTextOpacity = 0;
                         tutorialClickTimer = 0;
-                        particles = [new Particle(210, 180, 1, 0, 1), new Particle(270, 180, -1, 0, 1), new Particle(210, 380, 1, 0, 1), new Particle(270, 380, 1, 0, 1)];
+                        particles = [new Particle(210, 280, 1, 0, 1), new Particle(270, 280, -1, 0, 1), new Particle(210, 380, 1, 0, 1), new Particle(270, 380, 1, 0, 1)];
                         resetArrows();
                         arrowUpdateByParticles();
                         tutorialProgress = 10;
@@ -783,8 +783,9 @@ function main() {
                     ctx.beginPath();
                     ctx.font = "20px Comic Sans MS";
                     ctx.fillStyle = "#ffffff";
-                    ctx.fillText("Positives follow arrows, negatives go the other way.", 15, 40);
-                    ctx.fillText("So, like charges repel, and opposite charges attract.", 10, 80);
+                    ctx.fillText("Positive charges follow arrows.", 105, 40);
+                    ctx.fillText("Negative charges go opposite the arrow.", 65, 80);
+                    ctx.fillText("So, like charges repel, and opposite charges attract.", 10, 120);
 
                     // render arrows
                     for (var i = 0; i < gridLength; i++) {
@@ -809,8 +810,9 @@ function main() {
                     ctx.beginPath();
                     ctx.font = "20px Comic Sans MS";
                     ctx.fillStyle = "#ffffff";
-                    ctx.fillText("Positives follow arrows, negatives go the other way.", 15, 40);
-                    ctx.fillText("So, like charges repel, and opposite charges attract.", 10, 80);
+                    ctx.fillText("Positive charges follow arrows.", 105, 40);
+                    ctx.fillText("Negative charges go opposite the arrow.", 65, 80);
+                    ctx.fillText("So, like charges repel, and opposite charges attract.", 10, 120);
 
                     resetArrows();
                     arrowUpdateByParticles();
@@ -913,7 +915,7 @@ function main() {
                     ctx.beginPath();
                     ctx.font = "20px Comic Sans MS";
                     ctx.fillStyle = "#ffffff";
-                    ctx.fillText("To place a particle, click anywhere on the screen.", 10, 40);
+                    ctx.fillText("To place a particle, click anywhere on the screen.", 20, 40);
 
                     if (particles.length == 0) {
                         // hover particle movement
@@ -972,6 +974,7 @@ function main() {
 
                     if (mouseDown && particles.length > 0 && mouseX > 0 && mouseX < 512 && mouseY > 0 && mouseY < 512 && tutorialClickTimer > delay) {
                         tutorialClickTimer = 0;
+                        tutorialTextOpacity = 0;
                         particles = [];
                         placeMode = 1;
                         placeModeTimer = 0;
@@ -1059,7 +1062,7 @@ function main() {
 
                     if (mouseDown && particles.length > 0 && mouseX > 0 && mouseX < 512 && mouseY > 0 && mouseY < 512 && tutorialClickTimer > delay) {
                         tutorialClickTimer = 0;
-                        particles = [];
+                        tutorialTextOpacity = 0;
                         placeMode = 1;
                         placeModeTimer = 0;
                         particleAddTimer = 0;
@@ -1203,7 +1206,7 @@ function main() {
 
                     if (mouseDown && particles.length > 0 && tutorialChargeChanged && mouseX > 0 && mouseX < 512 && mouseY > 0 && mouseY < 512 && tutorialClickTimer > delay) {
                         tutorialClickTimer = 0;
-                        particles = [];
+                        tutorialTextOpacity = 0;
                         placeMode = 1;
                         placeModeTimer = 0;
                         particleAddTimer = 0;
@@ -1434,7 +1437,7 @@ function main() {
                     ctx.beginPath();
                     ctx.font = "20px Comic Sans MS";
                     ctx.fillStyle = "#ffffff";
-                    ctx.fillText("You cannot change the charge of or delete level particles.", 5, 40);
+                    ctx.fillText("You cannot change or delete level particles.", 45, 40);
     
                     // mode switching
                     if (keys[" "] && placeModeTimer > delay) {
@@ -1543,7 +1546,7 @@ function main() {
                     ctx.beginPath();
                     ctx.font = "20px Comic Sans MS";
                     ctx.fillStyle = "#ffffff";
-                    ctx.fillText("Lastly, use enter to test out your layout.", 45, 40);
+                    ctx.fillText("Lastly, use enter to test out your layout.", 50, 40);
 
                     // render arrows
                     for (var i = 0; i < gridLength; i++) {
@@ -1568,7 +1571,7 @@ function main() {
                     ctx.beginPath();
                     ctx.font = "20px Comic Sans MS";
                     ctx.fillStyle = "#ffffff";
-                    ctx.fillText("Lastly, use enter to test out your layout.", 45, 40);
+                    ctx.fillText("Lastly, use enter to test out your layout.", 50, 40);
 
                     resetArrows();
                     arrowUpdateByParticles();
@@ -1589,7 +1592,8 @@ function main() {
 
                     if (mouseDown && mouseX > 0 && mouseX < 512 && mouseY > 0 && mouseY < 512 && tutorialClickTimer > delay) {
                         tutorialClickTimer = 0;
-                        particles = [];
+                        tutorialTextOpacity = 0;
+                        particles = [new Particle(368, 64, -1, 0, 1), new Particle(409, 64, -1, 0, 1), new Particle(345, 110, -1, 0, 1), new Particle(370, 133, -1, 0, 1), new Particle(406, 137, -1, 0, 1), new Particle(430, 110, -1, 0, 1), new Particle(391, 100, 1, 0, 1)];
                         resetArrows();
                         arrowUpdateByParticles();
                         tutorialProgress = 19;
@@ -1610,6 +1614,53 @@ function main() {
                     ctx.fillStyle = "#ff0000";
                     ctx.fillText("-Zasharan2", 380, 480);
                     ctx.globalAlpha = 1;
+
+                    // render arrows
+                    for (var i = 0; i < gridLength; i++) {
+                        for (var j = 0; j < gridLength; j++) {
+                            arrows[i][j].render();
+                        }
+                    }
+
+                    // render particles
+                    for (var i = 0; i < particles.length; i++) {
+                        particles[i].render();
+                    }
+
+                    if (mouseDown && mouseX > 0 && mouseX < 512 && mouseY > 0 && mouseY < 512 && tutorialClickTimer > delay) {
+                        tutorialClickTimer = 0;
+                        tutorialProgress = 19.5;
+                    }
+                    break;
+                }
+                case 19.5: {
+                    ctx.beginPath();
+                    ctx.font = "50px Comic Sans MS";
+                    ctx.fillStyle = "#ffffff";
+                    ctx.save();
+                    ctx.rotate(0.3);
+                    ctx.fillText("Have fun!", 180, 180);
+                    ctx.restore();
+                    ctx.font = "20px Comic Sans MS";
+                    ctx.fillStyle = "#ff0000";
+                    ctx.fillText("-Zasharan2", 380, 480);
+
+                    resetArrows();
+                    arrowUpdateByParticles();
+
+                    playParticles();
+
+                    // render arrows
+                    for (var i = 0; i < gridLength; i++) {
+                        for (var j = 0; j < gridLength; j++) {
+                            arrows[i][j].render();
+                        }
+                    }
+
+                    // render particles
+                    for (var i = 0; i < particles.length; i++) {
+                        particles[i].render();
+                    }
 
                     if (mouseDown && mouseX > 0 && mouseX < 512 && mouseY > 0 && mouseY < 512 && tutorialClickTimer > delay) {
                         tutorialTextOpacity = 0;
