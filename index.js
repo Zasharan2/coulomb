@@ -478,16 +478,20 @@ var levelNextAnimationDistance;
 var levelNextAnimationParticle;
 var levelNextAnimationGoal;
 
+var creditTextOpacity;
+
 function main() {
     switch (gameScreen) {
         case SCREEN.NULL_TO_TITLE: {
-            playButton = new Button("PLAY", 185, 120, 115, 60, "#ff0000", "#ff0000", "#ffffff", "#ffffff", "#ffffff", "#ffffff");
-            tutorialButton = new Button("TUTORIAL", 125, 200, 240, 60, "#0000ff", "#0000ff", "#ffffff", "#ffffff", "#ffffff", "#ffffff");
-            sandboxButton = new Button("SANDBOX", 130, 280, 230, 60, "#00ff00", "#00ff00", "#ffffff", "#ffffff", "#ffffff", "#ffffff");
+            playButton = new Button("PLAY", 185, 160, 115, 60, "#ff0000", "#ff0000", "#ffffff", "#ffffff", "#ffffff", "#ffffff");
+            tutorialButton = new Button("TUTORIAL", 125, 240, 240, 60, "#0000ff", "#0000ff", "#ffffff", "#ffffff", "#ffffff", "#ffffff");
+            sandboxButton = new Button("SANDBOX", 130, 320, 230, 60, "#00ff00", "#00ff00", "#ffffff", "#ffffff", "#ffffff", "#ffffff");
 
             playButtonOpacity = 1;
             tutorialButtonOpacity = 1;
             sandboxButtonOpacity = 1;
+
+            creditTextOpacity = 0;
 
             titleButtonClickTimer = 0;
 
@@ -508,6 +512,24 @@ function main() {
             ctx.fillText("Coulomb", 100, 85);
             ctx.fillStyle = "#ffff00";
             ctx.fillText("Coulomb", 95, 80);
+
+            // credit
+            ctx.font = "25px Comic Sans MS";
+            ctx.fillStyle = "#ffffff";
+            ctx.fillText("By", 160 + (1 - creditTextOpacity) * 50, 130);
+            ctx.font = "Bold 25px Comic Sans MS";
+            ctx.fillStyle = "#ff0000";
+            ctx.globalAlpha = 1 - creditTextOpacity;
+            ctx.fillText("me", 196 + (1 - creditTextOpacity) * 50, 130);
+            ctx.globalAlpha = creditTextOpacity;
+            ctx.fillText("Zasharan2", 196 + (1 - creditTextOpacity) * 50, 130);
+            ctx.globalAlpha = 1;
+
+            if (mouseX > 196 && mouseX < 320 && mouseY > 100 && mouseY < 140) {
+                creditTextOpacity += (1 - creditTextOpacity) / 15;
+            } else {
+                creditTextOpacity += (0 - creditTextOpacity) / 15;
+            }
 
             // play button
             playButton.update();
