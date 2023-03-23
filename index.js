@@ -1714,8 +1714,8 @@ function main() {
             overParticleBool = false;
             overParticle = -1;
 
-            positiveChargeLimit = "infinity";
-            negativeChargeLimit = "infinity";
+            positiveChargeLimit = 1;
+            negativeChargeLimit = 0;
             positiveChargeSum = 0;
             negativeChargeSum = 0;
             positiveChargeLeftDisplayParticle = new Particle(30, 20, 1, 0, 1);
@@ -1972,12 +1972,23 @@ function main() {
 
             delete gameParticle;
             level++;
+            placeMode = 1;
             switch (level) {
                 case 2: {
+                    positiveChargeLimit = 0;
+                    negativeChargeLimit = 1;
+                    particles = [];
+                    break;
+                }
+                case 3: {
+                    positiveChargeLimit = 1;
+                    negativeChargeLimit = 1;
                     particles = [new Particle(130, 150, 1, 0, 0)];
                     break;
                 }
                 default: {
+                    positiveChargeLimit = "infinity";
+                    negativeChargeLimit = "infinity";
                     particles = [];
                     break;
                 }
