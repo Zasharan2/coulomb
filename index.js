@@ -126,8 +126,11 @@ class Button {
 };
 
 var playButton;
+var playButtonOpacity;
 var tutorialButton;
+var tutorialButtonOpacity;
 var sandboxButton;
+var sandboxButtonOpacity;
 var titleButtonClickTimer;
 
 var maxArrowLength = 17;
@@ -478,9 +481,14 @@ var levelNextAnimationGoal;
 function main() {
     switch (gameScreen) {
         case SCREEN.NULL_TO_TITLE: {
-            playButton = new Button("PLAY", 185, 120, 115, 60, "#ff0000", "#880000", "#ffffff", "#ffffff", "#888888", "#ffffff");
-            tutorialButton = new Button("TUTORIAL", 125, 200, 240, 60, "#0000ff", "#000088", "#ffffff", "#ffffff", "#888888", "#ffffff");
-            sandboxButton = new Button("SANDBOX", 130, 280, 230, 60, "#00ff00", "#008800", "#ffffff", "#ffffff", "#888888", "#ffffff");
+            playButton = new Button("PLAY", 185, 120, 115, 60, "#ff0000", "#ff0000", "#ffffff", "#ffffff", "#ffffff", "#ffffff");
+            tutorialButton = new Button("TUTORIAL", 125, 200, 240, 60, "#0000ff", "#0000ff", "#ffffff", "#ffffff", "#ffffff", "#ffffff");
+            sandboxButton = new Button("SANDBOX", 130, 280, 230, 60, "#00ff00", "#00ff00", "#ffffff", "#ffffff", "#ffffff", "#ffffff");
+
+            playButtonOpacity = 1;
+            tutorialButtonOpacity = 1;
+            sandboxButtonOpacity = 1;
+
             titleButtonClickTimer = 0;
 
             gameScreen = SCREEN.TITLE;
@@ -503,7 +511,15 @@ function main() {
 
             // play button
             playButton.update();
+            ctx.globalAlpha = playButtonOpacity;
             playButton.render();
+            ctx.globalAlpha = 1;
+
+            if (playButton.hovering) {
+                playButtonOpacity += (0.5 - playButtonOpacity) / 15;
+            } else {
+                playButtonOpacity += (1 - playButtonOpacity) / 15;
+            }
 
             if (playButton.clicked && titleButtonClickTimer > delay) {
                 titleButtonClickTimer = 0;
@@ -512,7 +528,15 @@ function main() {
 
             // tutorial button
             tutorialButton.update();
+            ctx.globalAlpha = tutorialButtonOpacity;
             tutorialButton.render();
+            ctx.globalAlpha = 1;
+
+            if (tutorialButton.hovering) {
+                tutorialButtonOpacity += (0.5 - tutorialButtonOpacity) / 15;
+            } else {
+                tutorialButtonOpacity += (1 - tutorialButtonOpacity) / 15;
+            }
 
             if (tutorialButton.clicked && titleButtonClickTimer > delay) {
                 titleButtonClickTimer = 0;
@@ -521,7 +545,15 @@ function main() {
 
             // sandbox button
             sandboxButton.update();
+            ctx.globalAlpha = sandboxButtonOpacity;
             sandboxButton.render();
+            ctx.globalAlpha = 1;
+
+            if (sandboxButton.hovering) {
+                sandboxButtonOpacity += (0.5 - sandboxButtonOpacity) / 15;
+            } else {
+                sandboxButtonOpacity += (1 - sandboxButtonOpacity) / 15;
+            }
 
             if (sandboxButton.clicked && titleButtonClickTimer > delay) {
                 titleButtonClickTimer = 0;
