@@ -1991,36 +1991,49 @@ function main() {
                     positiveChargeLimit = 0;
                     negativeChargeLimit = 1;
                     particles = [];
+                    // solution: place negative charge left of spawnpoint
                     break;
                 }
                 case 3: {
                     positiveChargeLimit = 1;
                     negativeChargeLimit = 1;
                     particles = [new Particle(130, 150, 1, 0, 0)];
+                    // solution: place negative charge next to fixed positive, then place positive charge right of goalpoint
                     break;
                 }
                 case 4: {
                     positiveChargeLimit = 2;
                     negativeChargeLimit = 1;
                     particles = [new Particle(130, 150, 1, 0, 0), new Particle(80, 256, -1, 0, 0)];
+                    // solution: place negative charge next to fixed positive, place positive charge next to fixed negative, and place positive charge right of goalpoint
                     break;
                 }
                 case 5: {
                     positiveChargeLimit = 1;
                     negativeChargeLimit = 0;
                     particles = [new Particle(360, 180, 1, 0, 0)];
+                    // solution: place positive charge some distance beneath the fixed positive
                     break;
                 }
                 case 6: {
                     positiveChargeLimit = 0;
                     negativeChargeLimit = 2;
                     particles = [new Particle(340, 150, 1, 0, 0)];
+                    // solution: place negative charge next to fixed positive, place negative charge left of spawnpoint
                     break;
                 }
                 case 7: {
                     positiveChargeLimit = 0;
                     negativeChargeLimit = 2;
                     particles = [new Particle(340, 150, 3, 0, 0)];
+                    // solution: place negative 2 charge above spawnpoint, may take some tries to get exact position
+                    break;
+                }
+                case 8: {
+                    positiveChargeLimit = 2;
+                    negativeChargeLimit = 0;
+                    particles = [new Particle(170, 171, 1, 0, 0), new Particle(170, 336, 1, 0, 0)];
+                    // solution: place positive 2 charge in goalpoint
                     break;
                 }
                 default: {
