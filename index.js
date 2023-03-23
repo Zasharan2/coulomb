@@ -2077,17 +2077,17 @@ function main() {
                     break;
                 }
                 case 7: {
-                    positiveChargeLimit = 0;
-                    negativeChargeLimit = 2;
-                    particles = [new Particle(340, 150, 3, 0, 0)];
-                    // solution: place negative 2 charge above spawnpoint, may take some tries to get exact position
-                    break;
-                }
-                case 8: {
                     positiveChargeLimit = 2;
                     negativeChargeLimit = 0;
                     particles = [new Particle(170, 171, 1, 0, 0), new Particle(170, 336, 1, 0, 0)];
                     // solution: place positive 2 charge in goalpoint
+                    break;
+                }
+                case 8: {
+                    positiveChargeLimit = 0;
+                    negativeChargeLimit = 2;
+                    particles = [new Particle(340, 150, 3, 0, 0)];
+                    // solution: place negative 2 charge above spawnpoint, may take some tries to get exact position
                     break;
                 }
                 default: {
