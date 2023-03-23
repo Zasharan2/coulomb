@@ -44,12 +44,14 @@ const SCREEN = {
     TITLE: 1,
     TITLE_TO_TUTORIAL: 1.2,
     TITLE_TO_GAME: 1.3,
+    TITLE_TO_SANDBOX: 1.5,
     TUTORIAL: 2,
     TUTORIAL_TO_TITLE: 2.1,
     GAME: 3,
     GAME_TO_LEVEL_NEXT: 3.4,
     LEVEL_NEXT: 4,
-    LEVEL_NEXT_TO_GAME: 4.3
+    LEVEL_NEXT_TO_GAME: 4.3,
+    SANDBOX: 5
 };
 
 var gameScreen = SCREEN.NULL_TO_TITLE;
@@ -125,6 +127,7 @@ class Button {
 
 var playButton;
 var tutorialButton;
+var sandboxButton;
 var titleButtonClickTimer;
 
 var maxArrowLength = 17;
@@ -477,6 +480,7 @@ function main() {
         case SCREEN.NULL_TO_TITLE: {
             playButton = new Button("PLAY", 185, 120, 115, 60, "#ff0000", "#880000", "#ffffff", "#ffffff", "#888888", "#ffffff");
             tutorialButton = new Button("TUTORIAL", 125, 200, 240, 60, "#0000ff", "#000088", "#ffffff", "#ffffff", "#888888", "#ffffff");
+            sandboxButton = new Button("SANDBOX", 130, 280, 230, 60, "#00ff00", "#008800", "#ffffff", "#ffffff", "#888888", "#ffffff");
             titleButtonClickTimer = 0;
 
             gameScreen = SCREEN.TITLE;
@@ -513,6 +517,15 @@ function main() {
             if (tutorialButton.clicked && titleButtonClickTimer > delay) {
                 titleButtonClickTimer = 0;
                 gameScreen = SCREEN.TITLE_TO_TUTORIAL;
+            }
+
+            // sandbox button
+            sandboxButton.update();
+            sandboxButton.render();
+
+            if (sandboxButton.clicked && titleButtonClickTimer > delay) {
+                titleButtonClickTimer = 0;
+                gameScreen = SCREEN.TITLE_TO_SANDBOX;
             }
             break;
         }
@@ -1997,11 +2010,202 @@ function main() {
             gameScreen = SCREEN.GAME;
             break;
         }
+        case SCREEN.TITLE_TO_SANDBOX: {
+            for (var i = 0; i < gridLength; i++) {
+                for (var j = 0; j < gridLength; j++) {
+                    arrows[i][j] = new Arrow(10 + (i * ((canvasWidth - 20) / (gridLength - 1))), 10 + (j * ((canvasHeight - 20) / (gridLength - 1))), 0, 0);
+                }
+            }
+            placeModeTimer = delay;
+            particleAddTimer = 0;
+            setupTimer = delay;
+            chargeChangeTimer = chargeChangeDelay;
+
+            hoverParticle = new Particle(mouseX, mouseY, placeMode, 0, 1);
+            overParticleBool = false;
+            overParticle = -1;
+
+            positiveChargeLimit = "infinity";
+            negativeChargeLimit = "infinity";
+            positiveChargeSum = 0;
+            negativeChargeSum = 0;
+            positiveChargeLeftDisplayParticle = new Particle(30, 20, 1, 0, 1);
+            negativeChargeLeftDisplayParticle = new Particle(70, 20, -1, 0, 1);
+
+            chargeLeftDisplayOpacity = 1;
+
+            particles = [];
+
+            setup = true;
+
+            gameScreen = SCREEN.SANDBOX;
+            break;
+        }
+        case SCREEN.SANDBOX: {
+            placeModeTimer++;
+            particleAddTimer++;
+            setupTimer++;
+            chargeChangeTimer++;
+
+            // background
+            ctx.beginPath();
+            ctx.fillStyle = "#000000";
+            ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+            if (setup) {
+                if (!overParticleBool) {
+                    // hover particle movement
+                    hoverParticle.x = mouseX;
+                    hoverParticle.y = mouseY;
+                    hoverParticle.charge = placeMode;
+        
+                    // hover particle rendering
+                    ctx.globalAlpha = 0.5;
+                    hoverParticle.render();
+                    ctx.globalAlpha = 1;
+                }
+
+                // mode switching
+                if (keys[" "] && placeModeTimer > delay) {
+                    placeModeTimer = 0;
+                    placeMode *= -1;
+                }
+
+                // arrow handling
+                for (var i = 0; i < gridLength; i++) {
+                    for (var j = 0; j < gridLength; j++) {
+                        if (placeMode == 1) {
+                            arrows[i][j].r = correction / ((Math.pow((arrows[i][j].x - mouseX), 2) + Math.pow((arrows[i][j].y - mouseY), 2)));
+                            arrows[i][j].theta = Math.atan2((mouseY - arrows[i][j].y), (arrows[i][j].x - mouseX));
+                        } else if (placeMode == -1) {
+                            arrows[i][j].r = correction / ((Math.pow((arrows[i][j].x - mouseX), 2) + Math.pow((arrows[i][j].y - mouseY), 2)));
+                            arrows[i][j].theta = Math.atan2((-1 * (mouseY - arrows[i][j].y)), (-1 * (arrows[i][j].x - mouseX)));
+                        }
+                    }
+                }
+
+                // add particles
+                if ((!overParticleBool) && mouseDown && particleAddTimer > delay) {
+                    if (mouseX > 0 && mouseX < 512 && mouseY > 0 && mouseY < 512) {
+                        particleAddTimer = 0;
+                        particles.push(new Particle(mouseX, mouseY, placeMode, 0, 1));
+                        if (chargeSumsOverLimits()) {
+                            particles.pop();
+                        }
+                    }
+                }
+
+                // detect overParticle
+                overParticleBool = false;
+                for (var i = 0; i < particles.length; i++) {
+                    if (AABB(mouseX - particleSize, mouseY - particleSize, particleSize * 2, particleSize * 2, particles[i].x - particleSize, particles[i].y - particleSize, particleSize * 2, particleSize * 2)) {
+                        overParticleBool = true;
+                        overParticle = i;
+                    }
+                }
+
+                arrowUpdateByParticleDisplay();
+
+                // change charge
+                if (overParticleBool && chargeChangeTimer > chargeChangeDelay && (particles[overParticle].modifiable == 1)) {
+                    chargeChangeTimer = 0;
+                    if (keys["ArrowUp"] || keys["w"]) {
+                        particles[overParticle].charge++;
+                        if (chargeSumsOverLimits()) {
+                            particles[overParticle].charge--;
+                        }
+                    }
+                    if (keys["ArrowDown"] || keys["s"]) {
+                        particles[overParticle].charge--;
+                        if (chargeSumsOverLimits()) {
+                            particles[overParticle].charge++;
+                        }
+                    }
+                }
+
+                for (var i = 0; i < particles.length; i++) {
+                    particles[i].displayCharge += (particles[i].charge - particles[i].displayCharge) / 5;
+                }
+
+                // remove particles
+                if (overParticleBool && keys["Backspace"] && (particles[overParticle].modifiable == 1)) {
+                    particles.splice(overParticle, 1);
+                    overParticleBool = false;
+                }
+
+                calculateChargeSums();
+
+                // switch setup mode
+                if (keys["Enter"] && setupTimer > delay) {
+                    setupTimer = 0;
+
+                    prevParticles = [];
+                    for (var i = 0; i < particles.length; i++) {
+                        prevParticles.push(new Particle(particles[i].x, particles[i].y, particles[i].charge, particles[i].locked, particles[i].modifiable));
+                    }
+                    resetArrows();
+                    arrowUpdateByParticles();
+                    overParticleBool = false;
+                    setup = false;
+                }
+            } else {
+                resetArrows();
+                arrowUpdateByParticles();
+
+                playParticles();
+
+                if (keys["Enter"] && setupTimer > delay) {
+                    setupTimer = 0;
+
+                    particles = [];
+                    for (var i = 0; i < prevParticles.length; i++) {
+                        particles.push(new Particle(prevParticles[i].x, prevParticles[i].y, prevParticles[i].charge, prevParticles[i].locked, prevParticles[i].modifiable));
+                    }
+                    setup = true;
+                }
+            }
+
+            // render arrows
+            for (var i = 0; i < gridLength; i++) {
+                for (var j = 0; j < gridLength; j++) {
+                    arrows[i][j].render();
+                }
+            }
+
+            // render particles
+            for (var i = 0; i < particles.length; i++) {
+                particles[i].render();
+            }
+
+            if (setup) {
+                // write particle charge
+                if (overParticleBool) {
+                    ctx.beginPath();
+                    ctx.font = "20px Comic Sans MS";
+                    ctx.fillStyle = "#ffffff";
+                    if (Math.sign(particles[overParticle].charge) == 1) {
+                        ctx.fillText("+" + particles[overParticle].charge, mouseX, mouseY);
+                    } else {
+                        ctx.fillText(particles[overParticle].charge, mouseX, mouseY);
+                    }
+                }
+
+                if (!AABB(mouseX, mouseY, 1, 1, 0, 0, 100, 50)) {
+                    chargeLeftDisplayOpacity += ((1 - chargeLeftDisplayOpacity) / 15);
+                } else {
+                    chargeLeftDisplayOpacity += ((0 - chargeLeftDisplayOpacity) / 15);
+                }
+
+                ctx.globalAlpha = chargeLeftDisplayOpacity;
+                drawChargeLeftDisplay();
+                ctx.globalAlpha = 1;
+            }
+
+            break;
+        }
         default: {
             break;
         }
-
-        
     }
 
     window.requestAnimationFrame(main);
