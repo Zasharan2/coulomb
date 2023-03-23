@@ -1999,6 +1999,30 @@ function main() {
                     particles = [new Particle(130, 150, 1, 0, 0)];
                     break;
                 }
+                case 4: {
+                    positiveChargeLimit = 2;
+                    negativeChargeLimit = 1;
+                    particles = [new Particle(130, 150, 1, 0, 0), new Particle(80, 256, -1, 0, 0)];
+                    break;
+                }
+                case 5: {
+                    positiveChargeLimit = 1;
+                    negativeChargeLimit = 0;
+                    particles = [new Particle(360, 180, 1, 0, 0)];
+                    break;
+                }
+                case 6: {
+                    positiveChargeLimit = 0;
+                    negativeChargeLimit = 2;
+                    particles = [new Particle(340, 150, 1, 0, 0)];
+                    break;
+                }
+                case 7: {
+                    positiveChargeLimit = 0;
+                    negativeChargeLimit = 2;
+                    particles = [new Particle(340, 150, 3, 0, 0)];
+                    break;
+                }
                 default: {
                     positiveChargeLimit = "infinity";
                     negativeChargeLimit = "infinity";
