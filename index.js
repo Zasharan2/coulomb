@@ -190,32 +190,49 @@ class Particle {
         this.x = x;
         this.y = y;
         this.charge = charge;
+        if (this.charge == 1) {
+            this.mass = 45;
+        } else {
+            this.mass = 1;
+        }
         this.displayCharge = charge;
         this.locked = locked;
         this.modifiable = modifiable;
         this.forceR = 0;
         this.forceTheta = 0;
+        this.velR = 0;
+        this.velTheta = 0;
+        this.isGameParticle = 0;
+    }
+
+    setGameParticle() {
+        this.isGameParticle = 1;
     }
 
     render() {
         ctx.beginPath();
-        if (Math.sign(this.charge) == 1) {
-            if (this.modifiable == 1) {
-                ctx.fillStyle = "#ff0000";
-            } else if (this.modifiable == 0) {
-                ctx.fillStyle = "#ff8800";
-            }
-            ctx.arc(this.x, this.y, particleSize, 0, 2 * Math.PI, false);
-        } else if (Math.sign(this.charge) == -1) {
-            if (this.modifiable == 1) {
-                ctx.fillStyle = "#0000ff";
-            } else if (this.modifiable == 0) {
-                ctx.fillStyle = "#0088ff";
-            }
+        if (this.isGameParticle == 1) {
+            ctx.fillStyle = "#00ffff";
             ctx.arc(this.x, this.y, (particleSize * (2 / 3)), 0, 2 * Math.PI, false);
-        } else if (Math.sign(this.charge) == 0) {
-            ctx.fillStyle = "#ffffff";
-            ctx.arc(this.x, this.y, particleSize, 0, 2 * Math.PI, false);
+        } else if (this.isGameParticle == 0) {
+            if (Math.sign(this.charge) == 1) {
+                if (this.modifiable == 1) {
+                    ctx.fillStyle = "#ff0000";
+                } else if (this.modifiable == 0) {
+                    ctx.fillStyle = "#ff8800";
+                }
+                ctx.arc(this.x, this.y, particleSize, 0, 2 * Math.PI, false);
+            } else if (Math.sign(this.charge) == -1) {
+                if (this.modifiable == 1) {
+                    ctx.fillStyle = "#0000ff";
+                } else if (this.modifiable == 0) {
+                    ctx.fillStyle = "#0088ff";
+                }
+                ctx.arc(this.x, this.y, (particleSize * (2 / 3)), 0, 2 * Math.PI, false);
+            } else if (Math.sign(this.charge) == 0) {
+                ctx.fillStyle = "#ffffff";
+                ctx.arc(this.x, this.y, particleSize, 0, 2 * Math.PI, false);
+            }
         }
         ctx.fill();
 
@@ -238,6 +255,13 @@ class Particle {
             ctx.lineWidth = 2;
             ctx.stroke();
         }
+    }
+
+    changeVelByForce() {
+        var tempXComp = (this.velR * Math.cos(this.velTheta)) + ((this.forceR * Math.cos(this.forceTheta)) / this.mass);
+        var tempYComp = (this.velR * Math.sin(this.velTheta)) + ((this.forceR * Math.sin(this.forceTheta)) / this.mass);
+        this.velR = Math.sqrt(Math.pow(tempXComp, 2) + Math.pow(tempYComp, 2));
+        this.velTheta = Math.atan2(tempYComp, tempXComp);
     }
 }
 
@@ -277,7 +301,8 @@ var delay = 20;
 var chargeChangeDelay = 10;
 var placeModeTimer = delay;
 var particleAddTimer = 0;
-var maxParticleForce = 5;
+var maxParticleVelocity = 5;
+var speedCoefficient = 0.5;
 var setup;
 var setupTimer = delay;
 var chargeChangeTimer = chargeChangeDelay;
@@ -419,50 +444,64 @@ function playParticles() {
     // move particles
     for (var i = 0; i < particles.length; i++) {
         if (particles[i].locked == 0) {
-            if (Math.sign(particles[i].charge) == 1) {
-                // bound speeds (so that particles don't move too fast)
-                if (particles[i].forceR > maxParticleForce) {
-                    particles[i].x += (maxParticleForce * Math.cos(particles[i].forceTheta)) / protonWeightCorrection;
-                    particles[i].y -= (maxParticleForce * Math.sin(particles[i].forceTheta)) / protonWeightCorrection;
-                } else if (particles[i].forceR < (-1 * maxParticleForce)) {
-                    particles[i].x += ((-1 * maxParticleForce) * Math.cos(particles[i].forceTheta)) / protonWeightCorrection;
-                    particles[i].y -= ((-1 * maxParticleForce) * Math.sin(particles[i].forceTheta)) / protonWeightCorrection;
-                } else {
-                    particles[i].x += (particles[i].forceR * Math.cos(particles[i].forceTheta)) / protonWeightCorrection;
-                    particles[i].y -= (particles[i].forceR * Math.sin(particles[i].forceTheta)) / protonWeightCorrection;
-                }
-            } else if (Math.sign(particles[i].charge) == -1) {
-                // bound speeds (so that particles don't move too fast)
-                if (particles[i].forceR > maxParticleForce) {
-                    particles[i].x += (maxParticleForce * Math.cos(particles[i].forceTheta));
-                    particles[i].y -= (maxParticleForce * Math.sin(particles[i].forceTheta));
-                } else if (particles[i].forceR < (-1 * maxParticleForce)) {
-                    particles[i].x += ((-1 * maxParticleForce) * Math.cos(particles[i].forceTheta));
-                    particles[i].y -= ((-1 * maxParticleForce) * Math.sin(particles[i].forceTheta));
-                } else {
-                    particles[i].x += (particles[i].forceR * Math.cos(particles[i].forceTheta));
-                    particles[i].y -= (particles[i].forceR * Math.sin(particles[i].forceTheta));
-                }
+            particles[i].changeVelByForce();
+
+            if (particles[i].velR > maxParticleVelocity) {
+                particles[i].x += (maxParticleVelocity * Math.cos(particles[i].velTheta)) * speedCoefficient;
+                particles[i].y -= (maxParticleVelocity * Math.sin(particles[i].velTheta)) * speedCoefficient;
+            } else if (particles[i].velR < (-1 * maxParticleVelocity)) {
+                particles[i].x += ((-1 * maxParticleVelocity) * Math.cos(particles[i].velTheta)) * speedCoefficient;
+                particles[i].y -= ((-1 * maxParticleVelocity) * Math.sin(particles[i].velTheta)) * speedCoefficient;
+            } else {
+                particles[i].x += (particles[i].velR * Math.cos(particles[i].velTheta)) * speedCoefficient;
+                particles[i].y -= (particles[i].velR * Math.sin(particles[i].velTheta)) * speedCoefficient;
             }
+            // if (Math.sign(particles[i].charge) == 1) {
+            //     // bound speeds (so that particles don't move too fast)
+            //     if (particles[i].forceR > maxParticleVelocity) {
+            //         particles[i].x += (maxParticleVelocity * Math.cos(particles[i].forceTheta)) / protonWeightCorrection;
+            //         particles[i].y -= (maxParticleVelocity * Math.sin(particles[i].forceTheta)) / protonWeightCorrection;
+            //     } else if (particles[i].forceR < (-1 * maxParticleVelocity)) {
+            //         particles[i].x += ((-1 * maxParticleVelocity) * Math.cos(particles[i].forceTheta)) / protonWeightCorrection;
+            //         particles[i].y -= ((-1 * maxParticleVelocity) * Math.sin(particles[i].forceTheta)) / protonWeightCorrection;
+            //     } else {
+            //         particles[i].x += (particles[i].forceR * Math.cos(particles[i].forceTheta)) / protonWeightCorrection;
+            //         particles[i].y -= (particles[i].forceR * Math.sin(particles[i].forceTheta)) / protonWeightCorrection;
+            //     }
+            // } else if (Math.sign(particles[i].charge) == -1) {
+            //     // bound speeds (so that particles don't move too fast)
+            //     if (particles[i].forceR > maxParticleVelocity) {
+            //         particles[i].x += (maxParticleVelocity * Math.cos(particles[i].forceTheta));
+            //         particles[i].y -= (maxParticleVelocity * Math.sin(particles[i].forceTheta));
+            //     } else if (particles[i].forceR < (-1 * maxParticleVelocity)) {
+            //         particles[i].x += ((-1 * maxParticleVelocity) * Math.cos(particles[i].forceTheta));
+            //         particles[i].y -= ((-1 * maxParticleVelocity) * Math.sin(particles[i].forceTheta));
+            //     } else {
+            //         particles[i].x += (particles[i].forceR * Math.cos(particles[i].forceTheta));
+            //         particles[i].y -= (particles[i].forceR * Math.sin(particles[i].forceTheta));
+            //     }
+            // }
         }
     }
 
-    // detect collision
-    for (var i = 0; i < particles.length; i++) {
-        for (var j = 0; j < particles.length; j++) {
-            if (i != j) {
-                if ((Math.sign(particles[i].charge) == 1 && Math.sign(particles[j].charge) == -1) || (Math.sign(particles[i].charge) == -1 && Math.sign(particles[j].charge) == 1)) {
-                    if (AABB(particles[i].x - particleSize, particles[i].y - particleSize, particleSize * 2, particleSize * 2, particles[j].x - particleSize, particles[j].y - particleSize, particleSize * 2, particleSize * 2)) {
-                        particles[i].x = (particles[i].x + particles[j].x) / 2;
-                        particles[i].y = (particles[i].y + particles[j].y) / 2;
-                        particles[i].charge = particles[i].charge + particles[j].charge;
-                        particles[i].locked = particles[i].locked | particles[j].locked;
-                        particles.splice(j, 1);
-                    }
-                }
-            }
-        }
-    }
+    // // detect collision
+    // for (var i = 0; i < particles.length; i++) {
+    //     for (var j = 0; j < particles.length; j++) {
+    //         if (i != j) {
+    //             if ((Math.sign(particles[i].charge) == 1 && Math.sign(particles[j].charge) == -1) || (Math.sign(particles[i].charge) == -1 && Math.sign(particles[j].charge) == 1)) {
+    //                 // if (AABB(particles[i].x - particleSize, particles[i].y - particleSize, particleSize * 2, particleSize * 2, particles[j].x - particleSize, particles[j].y - particleSize, particleSize * 2, particleSize * 2)) {
+    //                 if (AABB(particles[i].x - 1, particles[i].y - 1, 2, 2, particles[j].x - 1, particles[j].y - 1, 2, 2)) {
+    //                     particles[i].x = (particles[i].x + particles[j].x) / 2;
+    //                     particles[i].y = (particles[i].y + particles[j].y) / 2;
+    //                     particles[i].charge = particles[i].charge + particles[j].charge;
+    //                     particles[i].locked = particles[i].locked | particles[j].locked;
+    //                     particles[i].velR = 0;
+    //                     particles.splice(j, 1);
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
 }
 
 var tutorialTextOpacity;
@@ -614,6 +653,7 @@ function main() {
                         tutorialTextOpacity = 0;
                         tutorialClickTimer = 0;
                         tutorialParticle = new Particle(256, 256, -1, 0, 1);
+                        tutorialParticle.setGameParticle();
                         tutorialProgress = 1;
                     }
                     break;
@@ -980,6 +1020,83 @@ function main() {
                     if (mouseDown && mouseX > 0 && mouseX < 512 && mouseY > 0 && mouseY < 512 && tutorialClickTimer > delay) {
                         tutorialTextOpacity = 0;
                         tutorialClickTimer = 0;
+                        particles = [new Particle(67, 361, -1, 0, 1), new Particle(105, 367, -1, 0, 1), new Particle(330, 301, 1, 0, 1)];
+                        resetArrows();
+                        arrowUpdateByParticles();
+                        tutorialProgress = 12;
+                    }
+                    break;
+                }
+                case 12: {
+                    particleAddTimer++;
+                    placeModeTimer++;
+                    chargeChangeTimer++;
+
+                    tutorialTextOpacity += (1 - tutorialTextOpacity) / 15;
+                    ctx.globalAlpha = tutorialTextOpacity;
+                    ctx.beginPath();
+                    ctx.font = "20px Comic Sans MS";
+                    ctx.fillStyle = "#ffffff";
+                    ctx.fillText('When opposite charges "collide", they actually', 35, 40);
+                    ctx.fillText('kind of just "swing around" each other.', 75, 80);
+                    ctx.font = "15px Comic Sans MS";
+                    ctx.fillText("(This can sometimes look like they're bouncing off each other,", 30, 120);
+                    ctx.fillText("they're not.)", 195, 140);
+
+                    // render arrows
+                    for (var i = 0; i < gridLength; i++) {
+                        for (var j = 0; j < gridLength; j++) {
+                            arrows[i][j].render();
+                        }
+                    }
+
+                    // render particles
+                    for (var i = 0; i < particles.length; i++) {
+                        particles[i].render();
+                    }
+
+                    ctx.globalAlpha = 1;
+
+                    if (mouseDown && mouseX > 0 && mouseX < 512 && mouseY > 0 && mouseY < 512 && tutorialClickTimer > delay) {
+                        tutorialClickTimer = 0;
+                        tutorialProgress = 12.5;
+                    }
+                    break;
+                }
+                case 12.5: {
+                    particleAddTimer++;
+                    placeModeTimer++;
+                    chargeChangeTimer++;
+
+                    ctx.beginPath();
+                    ctx.font = "20px Comic Sans MS";
+                    ctx.fillStyle = "#ffffff";
+                    ctx.fillText('When opposite charges "collide", they actually', 35, 40);
+                    ctx.fillText('kind of just "swing around" each other.', 75, 80);
+                    ctx.font = "15px Comic Sans MS";
+                    ctx.fillText("(This can sometimes look like they're bouncing off each other,", 30, 120);
+                    ctx.fillText("they're not.)", 195, 140);
+
+                    resetArrows();
+                    arrowUpdateByParticles();
+
+                    playParticles();
+
+                    // render arrows
+                    for (var i = 0; i < gridLength; i++) {
+                        for (var j = 0; j < gridLength; j++) {
+                            arrows[i][j].render();
+                        }
+                    }
+
+                    // render particles
+                    for (var i = 0; i < particles.length; i++) {
+                        particles[i].render();
+                    }
+
+                    if (mouseDown && mouseX > 0 && mouseX < 512 && mouseY > 0 && mouseY < 512 && tutorialClickTimer > delay) {
+                        tutorialTextOpacity = 0;
+                        tutorialClickTimer = 0;
                         hoverParticle = new Particle(mouseX, mouseY, placeMode, 0, 1);
                         positiveChargeLimit = 1;
                         negativeChargeLimit = 0;
@@ -989,11 +1106,11 @@ function main() {
                         particleAddTimer = 0;
                         particles = [];
                         resetArrows();
-                        tutorialProgress = 12;
+                        tutorialProgress = 13;
                     }
                     break;
                 }
-                case 12: {
+                case 13: {
                     particleAddTimer++;
 
                     tutorialTextOpacity += (1 - tutorialTextOpacity) / 15;
@@ -1068,11 +1185,11 @@ function main() {
                         negativeChargeLimit = 1;
                         positiveChargeSum = 0;
                         negativeChargeSum = 0;
-                        tutorialProgress = 13;
+                        tutorialProgress = 14;
                     }
                     break;
                 }
-                case 13: {
+                case 14: {
                     particleAddTimer++;
                     placeModeTimer++;
 
@@ -1159,11 +1276,11 @@ function main() {
                         chargeChangeTimer = 0;
                         overParticleBool = false;
                         tutorialChargeChanged = false;
-                        tutorialProgress = 14;
+                        tutorialProgress = 15;
                     }
                     break;
                 }
-                case 14: {
+                case 15: {
                     particleAddTimer++;
                     placeModeTimer++;
                     chargeChangeTimer++;
@@ -1303,11 +1420,11 @@ function main() {
                         chargeChangeTimer = 0;
                         overParticleBool = false;
                         tutorialParticleDeleted = false;
-                        tutorialProgress = 15;
+                        tutorialProgress = 16;
                     }
                     break;
                 }
-                case 15: {
+                case 16: {
                     particleAddTimer++;
                     placeModeTimer++;
                     chargeChangeTimer++;
@@ -1441,11 +1558,11 @@ function main() {
                         particles = [new Particle(240, 240, -1, 1, 1), new Particle(380, 240, 1, 0, 1)];
                         resetArrows();
                         arrowUpdateByParticles();
-                        tutorialProgress = 16;
+                        tutorialProgress = 17;
                     }
                     break;
                 }
-                case 16: {
+                case 17: {
                     tutorialTextOpacity += (1 - tutorialTextOpacity) / 15;
                     ctx.globalAlpha = tutorialTextOpacity;
                     ctx.beginPath();
@@ -1468,11 +1585,11 @@ function main() {
 
                     if (mouseDown && mouseX > 0 && mouseX < 512 && mouseY > 0 && mouseY < 512 && tutorialClickTimer > delay) {
                         tutorialClickTimer = 0;
-                        tutorialProgress = 16.5;
+                        tutorialProgress = 17.5;
                     }
                     break;
                 }
-                case 16.5: {
+                case 17.5: {
                     tutorialTextOpacity += (1 - tutorialTextOpacity) / 15;
                     ctx.globalAlpha = tutorialTextOpacity;
                     ctx.beginPath();
@@ -1509,11 +1626,11 @@ function main() {
                         negativeChargeSum = 0;
                         chargeChangeTimer = 0;
                         overParticleBool = false;
-                        tutorialProgress = 17;
+                        tutorialProgress = 18;
                     }
                     break;
                 }
-                case 17: {
+                case 18: {
                     particleAddTimer++;
                     placeModeTimer++;
                     chargeChangeTimer++;
@@ -1619,14 +1736,14 @@ function main() {
                     if (mouseDown && mouseX > 0 && mouseX < 512 && mouseY > 0 && mouseY < 512 && tutorialClickTimer > delay) {
                         tutorialTextOpacity = 0;
                         tutorialClickTimer = 0;
-                        // particles = [];
-                        // resetArrows();
-                        // arrowUpdateByParticles();
-                        tutorialProgress = 18;
+                        particles = [new Particle(150, 240, 1, 0, 1), new Particle(350, 245, -1, 0, 1)];
+                        resetArrows();
+                        arrowUpdateByParticles();
+                        tutorialProgress = 19;
                     }
                     break;
                 }
-                case 18: {
+                case 19: {
                     tutorialTextOpacity += (1 - tutorialTextOpacity) / 15;
                     ctx.globalAlpha = tutorialTextOpacity;
                     ctx.beginPath();
@@ -1649,11 +1766,11 @@ function main() {
 
                     if (keys["Enter"] && tutorialClickTimer > delay) {
                         tutorialClickTimer = 0;
-                        tutorialProgress = 18.5;
+                        tutorialProgress = 19.5;
                     }
                     break;
                 }
-                case 18.5: {
+                case 19.5: {
                     ctx.beginPath();
                     ctx.font = "20px Comic Sans MS";
                     ctx.fillStyle = "#ffffff";
@@ -1679,14 +1796,14 @@ function main() {
                     if (mouseDown && mouseX > 0 && mouseX < 512 && mouseY > 0 && mouseY < 512 && tutorialClickTimer > delay) {
                         tutorialClickTimer = 0;
                         tutorialTextOpacity = 0;
-                        particles = [new Particle(368, 64, -1, 0, 1), new Particle(409, 64, -1, 0, 1), new Particle(345, 110, -1, 0, 1), new Particle(370, 133, -1, 0, 1), new Particle(406, 137, -1, 0, 1), new Particle(430, 110, -1, 0, 1), new Particle(391, 100, 1, 0, 1)];
+                        particles = [new Particle(368, 64, -1, 0, 1), new Particle(409, 64, -1, 0, 1), new Particle(345, 110, -1, 0, 1), new Particle(370, 133, -1, 0, 1), new Particle(408, 141, -1, 0, 1), new Particle(430, 110, -1, 0, 1), new Particle(391, 100, 1, 0, 1)];
                         resetArrows();
                         arrowUpdateByParticles();
-                        tutorialProgress = 19;
+                        tutorialProgress = 20;
                     }
                     break;
                 }
-                case 19: {
+                case 20: {
                     tutorialTextOpacity += (1 - tutorialTextOpacity) / 15;
                     ctx.globalAlpha = tutorialTextOpacity;
                     ctx.beginPath();
@@ -1715,11 +1832,11 @@ function main() {
 
                     if (mouseDown && mouseX > 0 && mouseX < 512 && mouseY > 0 && mouseY < 512 && tutorialClickTimer > delay) {
                         tutorialClickTimer = 0;
-                        tutorialProgress = 19.5;
+                        tutorialProgress = 20.5;
                     }
                     break;
                 }
-                case 19.5: {
+                case 20.5: {
                     ctx.beginPath();
                     ctx.font = "50px Comic Sans MS";
                     ctx.fillStyle = "#ffffff";
@@ -1793,8 +1910,8 @@ function main() {
 
             particles = [];
 
-            spawnpoint = new Location(0, 240, 32, 32, "SPAWN");
-            goalpoint = new Location(240, 240, 32, 32, "GOAL");
+            spawnpoint = new Location(155, 240, 32, 32, "SPAWN");
+            goalpoint = new Location(325, 240, 32, 32, "GOAL");
 
             setup = true;
 
@@ -1912,6 +2029,7 @@ function main() {
                         prevParticles.push(new Particle(particles[i].x, particles[i].y, particles[i].charge, particles[i].locked, particles[i].modifiable));
                     }
                     gameParticle = new Particle(spawnpoint.x + (spawnpoint.w / 2), spawnpoint.y + (spawnpoint.h / 2), -1, 0, 0);
+                    gameParticle.setGameParticle();
                     particles.push(gameParticle);
                     resetArrows();
                     arrowUpdateByParticles();
@@ -1991,6 +2109,7 @@ function main() {
             levelNextAnimationSize = 2;
             levelNextAnimationDistance = 100;
             levelNextAnimationParticle = new Particle(206, 256, -1, 0, 0);
+            levelNextAnimationParticle.setGameParticle();
             levelNextAnimationGoal = new Location(290, 240, 32, 32, "GOAL");
             gameScreen = SCREEN.LEVEL_NEXT;
             break;
@@ -2045,49 +2164,42 @@ function main() {
                     positiveChargeLimit = 0;
                     negativeChargeLimit = 1;
                     particles = [];
-                    // solution: place negative charge left of spawnpoint
                     break;
                 }
                 case 3: {
                     positiveChargeLimit = 1;
-                    negativeChargeLimit = 1;
-                    particles = [new Particle(130, 150, 1, 0, 0)];
-                    // solution: place negative charge next to fixed positive, then place positive charge right of goalpoint
+                    negativeChargeLimit = 0;
+                    particles = [new Particle(360, 180, 1, 0, 0)];
                     break;
                 }
                 case 4: {
                     positiveChargeLimit = 2;
-                    negativeChargeLimit = 1;
-                    particles = [new Particle(130, 150, 1, 0, 0), new Particle(80, 256, -1, 0, 0)];
-                    // solution: place negative charge next to fixed positive, place positive charge next to fixed negative, and place positive charge right of goalpoint
+                    negativeChargeLimit = 0;
+                    particles = [new Particle(256, 150, 1, 0, 0)];
                     break;
                 }
                 case 5: {
                     positiveChargeLimit = 1;
-                    negativeChargeLimit = 0;
-                    particles = [new Particle(360, 180, 1, 0, 0)];
-                    // solution: place positive charge some distance beneath the fixed positive
+                    negativeChargeLimit = 1;
+                    particles = [new Particle(256, 150, 1, 0, 0)];
                     break;
                 }
                 case 6: {
-                    positiveChargeLimit = 0;
-                    negativeChargeLimit = 2;
-                    particles = [new Particle(340, 150, 1, 0, 0)];
-                    // solution: place negative charge next to fixed positive, place negative charge left of spawnpoint
+                    positiveChargeLimit = 2;
+                    negativeChargeLimit = 0;
+                    particles = [new Particle(170, 156, 1, 0, 0), new Particle(170, 356, 1, 0, 0)];
                     break;
                 }
                 case 7: {
-                    positiveChargeLimit = 2;
-                    negativeChargeLimit = 0;
-                    particles = [new Particle(170, 171, 1, 0, 0), new Particle(170, 336, 1, 0, 0)];
-                    // solution: place positive 2 charge in goalpoint
+                    positiveChargeLimit = 0;
+                    negativeChargeLimit = 1;
+                    particles = [new Particle(340, 150, 3, 0, 0)];
                     break;
                 }
                 case 8: {
-                    positiveChargeLimit = 0;
-                    negativeChargeLimit = 2;
-                    particles = [new Particle(340, 150, 3, 0, 0)];
-                    // solution: place negative 2 charge above spawnpoint, may take some tries to get exact position
+                    positiveChargeLimit = 1;
+                    negativeChargeLimit = 0;
+                    particles = [new Particle(256, 256, -1, 1, 0), new Particle(goalpoint.x+16, 256, 1, 1, 0)];
                     break;
                 }
                 default: {
