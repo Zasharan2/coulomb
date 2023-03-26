@@ -2316,7 +2316,7 @@ function main() {
             break;
         }
         case SCREEN.WIN_TO_TITLE: {
-            gameScreen = SCREEN.TITLE;
+            gameScreen = SCREEN.NULL_TO_TITLE;
             break;
         }
         case SCREEN.TITLE_TO_SANDBOX: {
