@@ -447,14 +447,14 @@ function playParticles() {
             particles[i].changeVelByForce();
 
             if (particles[i].velR > maxParticleVelocity) {
-                particles[i].x += (maxParticleVelocity * Math.cos(particles[i].velTheta)) * speedCoefficient;
-                particles[i].y -= (maxParticleVelocity * Math.sin(particles[i].velTheta)) * speedCoefficient;
+                particles[i].x += (maxParticleVelocity * Math.cos(particles[i].velTheta)) * speedCoefficient * deltaTime;
+                particles[i].y -= (maxParticleVelocity * Math.sin(particles[i].velTheta)) * speedCoefficient * deltaTime;
             } else if (particles[i].velR < (-1 * maxParticleVelocity)) {
-                particles[i].x += ((-1 * maxParticleVelocity) * Math.cos(particles[i].velTheta)) * speedCoefficient;
-                particles[i].y -= ((-1 * maxParticleVelocity) * Math.sin(particles[i].velTheta)) * speedCoefficient;
+                particles[i].x += ((-1 * maxParticleVelocity) * Math.cos(particles[i].velTheta)) * speedCoefficient * deltaTime;
+                particles[i].y -= ((-1 * maxParticleVelocity) * Math.sin(particles[i].velTheta)) * speedCoefficient * deltaTime;
             } else {
-                particles[i].x += (particles[i].velR * Math.cos(particles[i].velTheta)) * speedCoefficient;
-                particles[i].y -= (particles[i].velR * Math.sin(particles[i].velTheta)) * speedCoefficient;
+                particles[i].x += (particles[i].velR * Math.cos(particles[i].velTheta)) * speedCoefficient * deltaTime;
+                particles[i].y -= (particles[i].velR * Math.sin(particles[i].velTheta)) * speedCoefficient * deltaTime;
             }
             // if (Math.sign(particles[i].charge) == 1) {
             //     // bound speeds (so that particles don't move too fast)
@@ -538,7 +538,7 @@ function main() {
             break;
         }
         case SCREEN.TITLE: {
-            titleButtonClickTimer++;
+            titleButtonClickTimer += deltaTime;
 
             // background
             ctx.beginPath();
@@ -565,9 +565,9 @@ function main() {
             ctx.globalAlpha = 1;
 
             if (mouseX > 196 && mouseX < 320 && mouseY > 100 && mouseY < 140) {
-                creditTextOpacity += (1 - creditTextOpacity) / 15;
+                creditTextOpacity += ((1 - creditTextOpacity) / 15) * deltaTime;
             } else {
-                creditTextOpacity += (0 - creditTextOpacity) / 15;
+                creditTextOpacity += ((0 - creditTextOpacity) / 15) * deltaTime;
             }
 
             // play button
@@ -577,9 +577,9 @@ function main() {
             ctx.globalAlpha = 1;
 
             if (playButton.hovering) {
-                playButtonOpacity += (0.5 - playButtonOpacity) / 15;
+                playButtonOpacity += ((0.5 - playButtonOpacity) / 15) * deltaTime;
             } else {
-                playButtonOpacity += (1 - playButtonOpacity) / 15;
+                playButtonOpacity += ((1 - playButtonOpacity) / 15) * deltaTime;
             }
 
             if (playButton.clicked && titleButtonClickTimer > delay) {
@@ -594,9 +594,9 @@ function main() {
             ctx.globalAlpha = 1;
 
             if (tutorialButton.hovering) {
-                tutorialButtonOpacity += (0.5 - tutorialButtonOpacity) / 15;
+                tutorialButtonOpacity += ((0.5 - tutorialButtonOpacity) / 15) * deltaTime;
             } else {
-                tutorialButtonOpacity += (1 - tutorialButtonOpacity) / 15;
+                tutorialButtonOpacity += ((1 - tutorialButtonOpacity) / 15) * deltaTime;
             }
 
             if (tutorialButton.clicked && titleButtonClickTimer > delay) {
@@ -611,9 +611,9 @@ function main() {
             ctx.globalAlpha = 1;
 
             if (sandboxButton.hovering) {
-                sandboxButtonOpacity += (0.5 - sandboxButtonOpacity) / 15;
+                sandboxButtonOpacity += ((0.5 - sandboxButtonOpacity) / 15) * deltaTime;
             } else {
-                sandboxButtonOpacity += (1 - sandboxButtonOpacity) / 15;
+                sandboxButtonOpacity += ((1 - sandboxButtonOpacity) / 15) * deltaTime;
             }
 
             if (sandboxButton.clicked && titleButtonClickTimer > delay) {
@@ -631,7 +631,7 @@ function main() {
             break;
         }
         case SCREEN.TUTORIAL: {
-            tutorialClickTimer++;
+            tutorialClickTimer += deltaTime;
 
             // background
             ctx.beginPath();
@@ -640,7 +640,7 @@ function main() {
 
             switch (tutorialProgress) {
                 case 0: {
-                    tutorialTextOpacity += (1 - tutorialTextOpacity) / 15;
+                    tutorialTextOpacity += ((1 - tutorialTextOpacity) / 15) * deltaTime;
                     ctx.globalAlpha = tutorialTextOpacity;
                     ctx.beginPath();
                     ctx.font = "20px Comic Sans MS";
@@ -659,7 +659,7 @@ function main() {
                     break;
                 }
                 case 1: {
-                    tutorialTextOpacity += (1 - tutorialTextOpacity) / 15;
+                    tutorialTextOpacity += ((1 - tutorialTextOpacity) / 15) * deltaTime;
                     ctx.globalAlpha = tutorialTextOpacity;
                     ctx.beginPath();
                     ctx.font = "20px Comic Sans MS";
@@ -679,7 +679,7 @@ function main() {
                     break;
                 }
                 case 2: {
-                    tutorialTextOpacity += (1 - tutorialTextOpacity) / 15;
+                    tutorialTextOpacity += ((1 - tutorialTextOpacity) / 15) * deltaTime;
                     ctx.globalAlpha = tutorialTextOpacity;
                     ctx.beginPath();
                     ctx.font = "20px Comic Sans MS";
@@ -698,7 +698,7 @@ function main() {
                     break;
                 }
                 case 3: {
-                    tutorialTextOpacity += (1 - tutorialTextOpacity) / 15;
+                    tutorialTextOpacity += ((1 - tutorialTextOpacity) / 15) * deltaTime;
                     ctx.globalAlpha = tutorialTextOpacity;
                     ctx.beginPath();
                     ctx.font = "20px Comic Sans MS";
@@ -724,7 +724,7 @@ function main() {
                     break;
                 }
                 case 4: {
-                    tutorialTextOpacity += (1 - tutorialTextOpacity) / 15;
+                    tutorialTextOpacity += ((1 - tutorialTextOpacity) / 15) * deltaTime;
                     ctx.globalAlpha = tutorialTextOpacity;
                     ctx.beginPath();
                     ctx.font = "20px Comic Sans MS";
@@ -753,7 +753,7 @@ function main() {
                     break;
                 }
                 case 5: {
-                    tutorialTextOpacity += (1 - tutorialTextOpacity) / 15;
+                    tutorialTextOpacity += ((1 - tutorialTextOpacity) / 15) * deltaTime;
                     ctx.globalAlpha = tutorialTextOpacity;
                     ctx.beginPath();
                     ctx.font = "20px Comic Sans MS";
@@ -782,7 +782,7 @@ function main() {
                     break;
                 }
                 case 6: {
-                    tutorialTextOpacity += (1 - tutorialTextOpacity) / 15;
+                    tutorialTextOpacity += ((1 - tutorialTextOpacity) / 15) * deltaTime;
                     ctx.globalAlpha = tutorialTextOpacity;
                     ctx.beginPath();
                     ctx.font = "20px Comic Sans MS";
@@ -811,7 +811,7 @@ function main() {
                     break;
                 }
                 case 7: {
-                    tutorialTextOpacity += (1 - tutorialTextOpacity) / 15;
+                    tutorialTextOpacity += ((1 - tutorialTextOpacity) / 15) * deltaTime;
                     ctx.globalAlpha = tutorialTextOpacity;
                     ctx.beginPath();
                     ctx.font = "20px Comic Sans MS";
@@ -842,7 +842,7 @@ function main() {
                     break;
                 }
                 case 8: {
-                    tutorialTextOpacity += (1 - tutorialTextOpacity) / 15;
+                    tutorialTextOpacity += ((1 - tutorialTextOpacity) / 15) * deltaTime;
                     ctx.globalAlpha = tutorialTextOpacity;
                     ctx.beginPath();
                     ctx.font = "20px Comic Sans MS";
@@ -873,7 +873,7 @@ function main() {
                     break;
                 }
                 case 9: {
-                    tutorialTextOpacity += (1 - tutorialTextOpacity) / 15;
+                    tutorialTextOpacity += ((1 - tutorialTextOpacity) / 15) * deltaTime;
                     ctx.globalAlpha = tutorialTextOpacity;
                     ctx.beginPath();
                     ctx.font = "20px Comic Sans MS";
@@ -904,7 +904,7 @@ function main() {
                     break;
                 }
                 case 10: {
-                    tutorialTextOpacity += (1 - tutorialTextOpacity) / 15;
+                    tutorialTextOpacity += ((1 - tutorialTextOpacity) / 15) * deltaTime;
                     ctx.globalAlpha = tutorialTextOpacity;
                     ctx.beginPath();
                     ctx.font = "20px Comic Sans MS";
@@ -968,7 +968,7 @@ function main() {
                     break;
                 }
                 case 11: {
-                    tutorialTextOpacity += (1 - tutorialTextOpacity) / 15;
+                    tutorialTextOpacity += ((1 - tutorialTextOpacity) / 15) * deltaTime;
                     ctx.globalAlpha = tutorialTextOpacity;
                     ctx.beginPath();
                     ctx.font = "20px Comic Sans MS";
@@ -1028,11 +1028,11 @@ function main() {
                     break;
                 }
                 case 12: {
-                    particleAddTimer++;
-                    placeModeTimer++;
-                    chargeChangeTimer++;
+                    particleAddTimer += deltaTime;
+                    placeModeTimer += deltaTime;
+                    chargeChangeTimer += deltaTime;
 
-                    tutorialTextOpacity += (1 - tutorialTextOpacity) / 15;
+                    tutorialTextOpacity += ((1 - tutorialTextOpacity) / 15) * deltaTime;
                     ctx.globalAlpha = tutorialTextOpacity;
                     ctx.beginPath();
                     ctx.font = "20px Comic Sans MS";
@@ -1064,9 +1064,9 @@ function main() {
                     break;
                 }
                 case 12.5: {
-                    particleAddTimer++;
-                    placeModeTimer++;
-                    chargeChangeTimer++;
+                    particleAddTimer += deltaTime;
+                    placeModeTimer += deltaTime;
+                    chargeChangeTimer += deltaTime;
 
                     ctx.beginPath();
                     ctx.font = "20px Comic Sans MS";
@@ -1111,9 +1111,9 @@ function main() {
                     break;
                 }
                 case 13: {
-                    particleAddTimer++;
+                    particleAddTimer += deltaTime;
 
-                    tutorialTextOpacity += (1 - tutorialTextOpacity) / 15;
+                    tutorialTextOpacity += ((1 - tutorialTextOpacity) / 15) * deltaTime;
                     ctx.globalAlpha = tutorialTextOpacity;
                     ctx.beginPath();
                     ctx.font = "20px Comic Sans MS";
@@ -1190,10 +1190,10 @@ function main() {
                     break;
                 }
                 case 14: {
-                    particleAddTimer++;
-                    placeModeTimer++;
+                    particleAddTimer += deltaTime;
+                    placeModeTimer += deltaTime;
 
-                    tutorialTextOpacity += (1 - tutorialTextOpacity) / 15;
+                    tutorialTextOpacity += ((1 - tutorialTextOpacity) / 15) * deltaTime;
                     ctx.globalAlpha = tutorialTextOpacity;
                     ctx.beginPath();
                     ctx.font = "20px Comic Sans MS";
@@ -1281,11 +1281,11 @@ function main() {
                     break;
                 }
                 case 15: {
-                    particleAddTimer++;
-                    placeModeTimer++;
-                    chargeChangeTimer++;
+                    particleAddTimer += deltaTime;
+                    placeModeTimer += deltaTime;
+                    chargeChangeTimer += deltaTime;
 
-                    tutorialTextOpacity += (1 - tutorialTextOpacity) / 15;
+                    tutorialTextOpacity += ((1 - tutorialTextOpacity) / 15) * deltaTime;
                     ctx.globalAlpha = tutorialTextOpacity;
                     ctx.beginPath();
                     ctx.font = "20px Comic Sans MS";
@@ -1368,7 +1368,7 @@ function main() {
                     }
     
                     for (var i = 0; i < particles.length; i++) {
-                        particles[i].displayCharge += (particles[i].charge - particles[i].displayCharge) / 5;
+                        particles[i].displayCharge += ((particles[i].charge - particles[i].displayCharge) / 5) * deltaTime;
                     }
     
                     // remove particles
@@ -1425,11 +1425,11 @@ function main() {
                     break;
                 }
                 case 16: {
-                    particleAddTimer++;
-                    placeModeTimer++;
-                    chargeChangeTimer++;
+                    particleAddTimer += deltaTime;
+                    placeModeTimer += deltaTime;
+                    chargeChangeTimer += deltaTime;
 
-                    tutorialTextOpacity += (1 - tutorialTextOpacity) / 15;
+                    tutorialTextOpacity += ((1 - tutorialTextOpacity) / 15) * deltaTime;
                     ctx.globalAlpha = tutorialTextOpacity;
                     ctx.beginPath();
                     ctx.font = "20px Comic Sans MS";
@@ -1512,7 +1512,7 @@ function main() {
                     }
     
                     for (var i = 0; i < particles.length; i++) {
-                        particles[i].displayCharge += (particles[i].charge - particles[i].displayCharge) / 5;
+                        particles[i].displayCharge += ((particles[i].charge - particles[i].displayCharge) / 5) * deltaTime;
                     }
     
                     // remove particles
@@ -1563,7 +1563,7 @@ function main() {
                     break;
                 }
                 case 17: {
-                    tutorialTextOpacity += (1 - tutorialTextOpacity) / 15;
+                    tutorialTextOpacity += ((1 - tutorialTextOpacity) / 15) * deltaTime;
                     ctx.globalAlpha = tutorialTextOpacity;
                     ctx.beginPath();
                     ctx.font = "20px Comic Sans MS";
@@ -1590,7 +1590,7 @@ function main() {
                     break;
                 }
                 case 17.5: {
-                    tutorialTextOpacity += (1 - tutorialTextOpacity) / 15;
+                    tutorialTextOpacity += ((1 - tutorialTextOpacity) / 15) * deltaTime;
                     ctx.globalAlpha = tutorialTextOpacity;
                     ctx.beginPath();
                     ctx.font = "20px Comic Sans MS";
@@ -1631,11 +1631,11 @@ function main() {
                     break;
                 }
                 case 18: {
-                    particleAddTimer++;
-                    placeModeTimer++;
-                    chargeChangeTimer++;
+                    particleAddTimer += deltaTime;
+                    placeModeTimer += deltaTime;
+                    chargeChangeTimer += deltaTime;
 
-                    tutorialTextOpacity += (1 - tutorialTextOpacity) / 15;
+                    tutorialTextOpacity += ((1 - tutorialTextOpacity) / 15) * deltaTime;
                     ctx.globalAlpha = tutorialTextOpacity;
                     ctx.beginPath();
                     ctx.font = "20px Comic Sans MS";
@@ -1694,7 +1694,7 @@ function main() {
                     }
     
                     for (var i = 0; i < particles.length; i++) {
-                        particles[i].displayCharge += (particles[i].charge - particles[i].displayCharge) / 5;
+                        particles[i].displayCharge += ((particles[i].charge - particles[i].displayCharge) / 5) * deltaTime;
                     }
     
                     // remove particles
@@ -1744,7 +1744,7 @@ function main() {
                     break;
                 }
                 case 19: {
-                    tutorialTextOpacity += (1 - tutorialTextOpacity) / 15;
+                    tutorialTextOpacity += ((1 - tutorialTextOpacity) / 15) * deltaTime;
                     ctx.globalAlpha = tutorialTextOpacity;
                     ctx.beginPath();
                     ctx.font = "20px Comic Sans MS";
@@ -1804,7 +1804,7 @@ function main() {
                     break;
                 }
                 case 20: {
-                    tutorialTextOpacity += (1 - tutorialTextOpacity) / 15;
+                    tutorialTextOpacity += ((1 - tutorialTextOpacity) / 15) * deltaTime;
                     ctx.globalAlpha = tutorialTextOpacity;
                     ctx.beginPath();
                     ctx.font = "50px Comic Sans MS";
@@ -1921,10 +1921,10 @@ function main() {
             break;
         }
         case SCREEN.GAME: {
-            placeModeTimer++;
-            particleAddTimer++;
-            setupTimer++;
-            chargeChangeTimer++;
+            placeModeTimer += deltaTime;
+            particleAddTimer += deltaTime;
+            setupTimer += deltaTime;
+            chargeChangeTimer += deltaTime;
 
             // background
             ctx.beginPath();
@@ -2009,7 +2009,7 @@ function main() {
                 }
 
                 for (var i = 0; i < particles.length; i++) {
-                    particles[i].displayCharge += (particles[i].charge - particles[i].displayCharge) / 5;
+                    particles[i].displayCharge += ((particles[i].charge - particles[i].displayCharge) / 5) * deltaTime;
                 }
 
                 // remove particles
@@ -2084,18 +2084,18 @@ function main() {
                 }
 
                 if (!AABB(mouseX, mouseY, 1, 1, 0, 0, 100, 50)) {
-                    chargeLeftDisplayOpacity += ((1 - chargeLeftDisplayOpacity) / 15);
+                    chargeLeftDisplayOpacity += ((1 - chargeLeftDisplayOpacity) / 15) * deltaTime;
                 } else {
-                    chargeLeftDisplayOpacity += ((0 - chargeLeftDisplayOpacity) / 15);
+                    chargeLeftDisplayOpacity += ((0 - chargeLeftDisplayOpacity) / 15) * deltaTime;
                 }
 
                 ctx.globalAlpha = chargeLeftDisplayOpacity;
                 drawChargeLeftDisplay();
 
                 if (!AABB(mouseX, mouseY, 1, 1, 0, 462, 140, 50)) {
-                    levelDisplayOpacity += ((1 - levelDisplayOpacity) / 15);
+                    levelDisplayOpacity += ((1 - levelDisplayOpacity) / 15) * deltaTime;
                 } else {
-                    levelDisplayOpacity += ((0 - levelDisplayOpacity) / 15);
+                    levelDisplayOpacity += ((0 - levelDisplayOpacity) / 15) * deltaTime;
                 }
 
                 ctx.globalAlpha = levelDisplayOpacity;
@@ -2245,10 +2245,10 @@ function main() {
             break;
         }
         case SCREEN.SANDBOX: {
-            placeModeTimer++;
-            particleAddTimer++;
-            setupTimer++;
-            chargeChangeTimer++;
+            placeModeTimer += deltaTime;
+            particleAddTimer += deltaTime;
+            setupTimer += deltaTime;
+            chargeChangeTimer += deltaTime;
 
             // background
             ctx.beginPath();
@@ -2327,7 +2327,7 @@ function main() {
                 }
 
                 for (var i = 0; i < particles.length; i++) {
-                    particles[i].displayCharge += (particles[i].charge - particles[i].displayCharge) / 5;
+                    particles[i].displayCharge += ((particles[i].charge - particles[i].displayCharge) / 5) * deltaTime;
                 }
 
                 // remove particles
@@ -2394,9 +2394,9 @@ function main() {
                 }
 
                 if (!AABB(mouseX, mouseY, 1, 1, 0, 0, 100, 50)) {
-                    chargeLeftDisplayOpacity += ((1 - chargeLeftDisplayOpacity) / 15);
+                    chargeLeftDisplayOpacity += ((1 - chargeLeftDisplayOpacity) / 15) * deltaTime;
                 } else {
-                    chargeLeftDisplayOpacity += ((0 - chargeLeftDisplayOpacity) / 15);
+                    chargeLeftDisplayOpacity += ((0 - chargeLeftDisplayOpacity) / 15) * deltaTime;
                 }
 
                 ctx.globalAlpha = chargeLeftDisplayOpacity;
