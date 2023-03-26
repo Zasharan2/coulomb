@@ -2120,13 +2120,13 @@ function main() {
             ctx.fillStyle = "#000000";
             ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
-            levelNextAnimationDistance += (0 - levelNextAnimationDistance) / 15;
+            levelNextAnimationDistance += ((0 - levelNextAnimationDistance) / 15) * deltaTime;
 
             levelNextAnimationParticle.x = 256 - (levelNextAnimationDistance / 2);
             levelNextAnimationGoal.x = 240 + (levelNextAnimationDistance / 2);
 
             if (levelNextAnimationDistance < 0.1) {
-                levelNextAnimationSize += (5 - levelNextAnimationSize) / 15;
+                levelNextAnimationSize += ((5 - levelNextAnimationSize) / 15) * deltaTime;
             }
 
             ctx.save();
@@ -2411,6 +2411,17 @@ function main() {
         }
     }
 
-    window.requestAnimationFrame(main);
+    // window.requestAnimationFrame(main);
 }
-window.requestAnimationFrame(main);
+
+var deltaTime = 0;
+var deltaCorrect = (1 / 8);
+var prevTime = Date.now();
+function loop() {
+    deltaTime = (Date.now() - prevTime) * deltaCorrect;
+    prevTime = Date.now();
+
+    main();
+    window.requestAnimationFrame(loop);
+}
+window.requestAnimationFrame(loop);
