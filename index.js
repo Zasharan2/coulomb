@@ -2191,14 +2191,34 @@ function main() {
                     break;
                 }
                 case 7: {
-                    positiveChargeLimit = 0;
-                    negativeChargeLimit = 1;
-                    particles = [new Particle(340, 150, 3, 0, 0)];
+                    positiveChargeLimit = 2;
+                    negativeChargeLimit = 0;
+                    spawnpoint = new Location(155, 325, 32, 32, "SPAWN");
+                    goalpoint = new Location(325, 155, 32, 32, "GOAL");
+                    particles = [new Particle(365, 150, -1, 1, 0)];
                     break;
                 }
                 case 8: {
+                    positiveChargeLimit = 0;
+                    negativeChargeLimit = 1;
+                    spawnpoint = new Location(155, 240, 32, 32, "SPAWN");
+                    goalpoint = new Location(325, 240, 32, 32, "GOAL");
+                    particles = [new Particle(340, 150, 3, 0, 0)];
+                    break;
+                }
+                case 9: {
+                    positiveChargeLimit = 0;
+                    negativeChargeLimit = 1;
+                    spawnpoint = new Location(240, 100, 32, 32, "SPAWN");
+                    goalpoint = new Location(240, 375, 32, 32, "GOAL");
+                    particles = [new Particle(300, 200, 1, 1, 0), new Particle(200, 300, 1, 1, 0)];
+                    break;
+                }
+                case 10: {
                     positiveChargeLimit = 1;
                     negativeChargeLimit = 0;
+                    spawnpoint = new Location(155, 240, 32, 32, "SPAWN");
+                    goalpoint = new Location(325, 240, 32, 32, "GOAL");
                     particles = [new Particle(256, 256, -1, 1, 0), new Particle(goalpoint.x+16, 256, 1, 1, 0)];
                     break;
                 }
