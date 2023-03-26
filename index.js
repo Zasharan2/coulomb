@@ -51,7 +51,10 @@ const SCREEN = {
     GAME_TO_LEVEL_NEXT: 3.4,
     LEVEL_NEXT: 4,
     LEVEL_NEXT_TO_GAME: 4.3,
-    SANDBOX: 5
+    LEVEL_NEXT_TO_WIN: 4.6,
+    SANDBOX: 5,
+    WIN: 6,
+    WIN_TO_TITLE: 6.1
 };
 
 var gameScreen = SCREEN.NULL_TO_TITLE;
@@ -144,6 +147,10 @@ class Arrow {
         this.theta = theta;
         this.xComp = r * Math.cos(theta);
         this.yComp = r * Math.sin(theta);
+    }
+
+    setRandomTitleRotation() {
+        this.titleRotation = Math.random() - 0.5;
     }
 
     rectToPolar() {
@@ -519,9 +526,20 @@ var levelNextAnimationGoal;
 
 var creditTextOpacity;
 
+var winAnimationOpacity;
+var winClickTimer;
+var winAnimationTextOpacity;
+
 function main() {
     switch (gameScreen) {
         case SCREEN.NULL_TO_TITLE: {
+            for (var i = 0; i < gridLength; i++) {
+                for (var j = 0; j < gridLength; j++) {
+                    arrows[i][j] = new Arrow(10 + (i * ((canvasWidth - 20) / (gridLength - 1))), 10 + (j * ((canvasHeight - 20) / (gridLength - 1))), (maxArrowLength * (0.3)), Math.random() * Math.PI * 2);
+                    arrows[i][j].setRandomTitleRotation();
+                }
+            }
+
             playButton = new Button("PLAY", 185, 160, 115, 60, "#ff0000", "#ff0000", "#ffffff", "#ffffff", "#ffffff", "#ffffff");
             tutorialButton = new Button("TUTORIAL", 125, 240, 240, 60, "#0000ff", "#0000ff", "#ffffff", "#ffffff", "#ffffff", "#ffffff");
             sandboxButton = new Button("SANDBOX", 130, 320, 230, 60, "#00ff00", "#00ff00", "#ffffff", "#ffffff", "#ffffff", "#ffffff");
@@ -544,6 +562,15 @@ function main() {
             ctx.beginPath();
             ctx.fillStyle = "#000000";
             ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+            ctx.globalAlpha = 0.1;
+            for (var i = 0; i < gridLength; i++) {
+                for (var j = 0; j < gridLength; j++) {
+                    arrows[i][j].theta += arrows[i][j].titleRotation * (deltaTime / 10);
+                    arrows[i][j].render();
+                }
+            }
+            ctx.globalAlpha = 1;
 
             // title
             ctx.font = "75px Comic Sans MS";
@@ -572,6 +599,9 @@ function main() {
 
             // play button
             playButton.update();
+            ctx.beginPath();
+            ctx.fillStyle = "#000000";
+            ctx.fillRect(playButton.x, playButton.y, playButton.w, playButton.h);
             ctx.globalAlpha = playButtonOpacity;
             playButton.render();
             ctx.globalAlpha = 1;
@@ -589,6 +619,9 @@ function main() {
 
             // tutorial button
             tutorialButton.update();
+            ctx.beginPath();
+            ctx.fillStyle = "#000000";
+            ctx.fillRect(tutorialButton.x, tutorialButton.y, tutorialButton.w, tutorialButton.h);
             ctx.globalAlpha = tutorialButtonOpacity;
             tutorialButton.render();
             ctx.globalAlpha = 1;
@@ -606,6 +639,9 @@ function main() {
 
             // sandbox button
             sandboxButton.update();
+            ctx.beginPath();
+            ctx.fillStyle = "#000000";
+            ctx.fillRect(sandboxButton.x, sandboxButton.y, sandboxButton.w, sandboxButton.h);
             ctx.globalAlpha = sandboxButtonOpacity;
             sandboxButton.render();
             ctx.globalAlpha = 1;
@@ -2223,14 +2259,64 @@ function main() {
                     break;
                 }
                 default: {
+                    // win
+                    gameScreen = SCREEN.LEVEL_NEXT_TO_WIN;
                     positiveChargeLimit = "infinity";
                     negativeChargeLimit = "infinity";
                     particles = [];
                     break;
                 }
             }
-            setup = true;
-            gameScreen = SCREEN.GAME;
+            if (gameScreen != SCREEN.LEVEL_NEXT_TO_WIN) {
+                setup = true;
+                gameScreen = SCREEN.GAME;
+            }
+            break;
+        }
+        case SCREEN.LEVEL_NEXT_TO_WIN: {
+            winAnimationOpacity = 0;
+            winAnimationTextOpacity = 0;
+            winClickTimer = 0;
+            gameScreen = SCREEN.WIN;
+            break;
+        }
+        case SCREEN.WIN: {
+            // background
+            ctx.beginPath();
+            ctx.fillStyle = "#000000";
+            ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+            winAnimationOpacity += ((5 - winAnimationOpacity) / 15) * deltaTime;
+            winClickTimer += deltaTime;
+
+            ctx.save();
+            ctx.setTransform(winAnimationOpacity, 0, 0, winAnimationOpacity, -(winAnimationOpacity - 1)*256, -(winAnimationOpacity - 1)*256);
+            ctx.globalAlpha = (winAnimationOpacity / 5);
+            ctx.beginPath();
+            ctx.fillStyle = "#ffffff";
+            ctx.font = "20px Comic Sans MS";
+            ctx.fillText("You Win!", 215, 260);
+            ctx.globalAlpha = 1;
+            ctx.restore();
+
+            if ((5 - winAnimationOpacity) < 0.01) {
+                winAnimationTextOpacity += ((1 - winAnimationTextOpacity) / 15) * deltaTime;
+            }
+
+            ctx.globalAlpha = winAnimationTextOpacity;
+            ctx.beginPath();
+            ctx.font = "20px Comic Sans MS";
+            ctx.fillStyle = "#ffffff";
+            ctx.fillText("Click to continue →", 320, 500);
+            ctx.globalAlpha = 1;
+
+            if (mouseDown && winClickTimer > delay && mouseX > 0 && mouseX < 512 && mouseY > 0 && mouseY < 512) {
+                gameScreen = SCREEN.WIN_TO_TITLE;
+            }
+            break;
+        }
+        case SCREEN.WIN_TO_TITLE: {
+            gameScreen = SCREEN.TITLE;
             break;
         }
         case SCREEN.TITLE_TO_SANDBOX: {
