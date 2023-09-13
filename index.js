@@ -2430,12 +2430,7 @@ function main() {
                             particles[overParticle].charge++;
                         }
                     }
-                }
-
-                // lock charge
-                if (overParticleBool && chargeChangeTimer > chargeChangeDelay && (particles[overParticle].modifiable == 1)) {
                     if (keys["l"]) {
-                        chargeChangeTimer = 0;
                         console.log("lockkck");
                         if (particles[overParticle].locked == 1) {
                             particles[overParticle].locked = 0;
