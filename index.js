@@ -2432,6 +2432,18 @@ function main() {
                     }
                 }
 
+                // lock charge
+                if (overParticleBool && chargeChangeTimer > chargeChangeDelay && (particles[overParticle].modifiable == 1)) {
+                    chargeChangeTimer = 0;
+                    if (keys["l"]) {
+                        if (particles[overParticle].locked == 1) {
+                            particles[overParticle].locked = 0;
+                        } else if (particles[overParticle].locked == 0) {
+                            particles[overParticle].locked = 1;
+                        }
+                    }
+                }
+
                 for (var i = 0; i < particles.length; i++) {
                     particles[i].displayCharge += ((particles[i].charge - particles[i].displayCharge) / 5) * deltaTime;
                 }
