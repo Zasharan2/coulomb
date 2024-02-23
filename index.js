@@ -270,6 +270,31 @@ class Particle {
         this.velR = Math.sqrt(Math.pow(tempXComp, 2) + Math.pow(tempYComp, 2));
         this.velTheta = Math.atan2(tempYComp, tempXComp);
     }
+
+    bound() {
+        if (boundaryMode == 1) {
+            if (this.x < 0) {
+                this.x = 0;
+                this.velR = 0;
+                this.velTheta = 0;
+            }
+            if (this.x > 512) {
+                this.x = 512;
+                this.velR = 0;
+                this.velTheta = 0;
+            }
+            if (this.y < 0) {
+                this.y = 0;
+                this.velR = 0;
+                this.velTheta = 0;
+            }
+            if (this.y > 512) {
+                this.y = 512;
+                this.velR = 0;
+                this.velTheta = 0;
+            }
+        }
+    }
 }
 
 var hoverParticle;
@@ -303,11 +328,13 @@ var spawnpoint;
 var goalpoint;
 
 var placeMode = 1;
+var boundaryMode = -1;
 
 var delay = 20;
 var chargeChangeDelay = 10;
 var placeModeTimer = delay;
 var particleAddTimer = 0;
+var boundaryModeTimer = delay;
 var maxParticleVelocity = 5;
 var speedCoefficient = 0.5;
 var setup;
@@ -463,6 +490,7 @@ function playParticles() {
                 particles[i].x += (particles[i].velR * Math.cos(particles[i].velTheta)) * speedCoefficient * deltaTime;
                 particles[i].y -= (particles[i].velR * Math.sin(particles[i].velTheta)) * speedCoefficient * deltaTime;
             }
+            particles[i].bound();
             // if (Math.sign(particles[i].charge) == 1) {
             //     // bound speeds (so that particles don't move too fast)
             //     if (particles[i].forceR > maxParticleVelocity) {
@@ -2355,6 +2383,7 @@ function main() {
             particleAddTimer += deltaTime;
             setupTimer += deltaTime;
             chargeChangeTimer += deltaTime;
+            boundaryModeTimer += deltaTime;
 
             // background
             ctx.beginPath();
@@ -2378,6 +2407,11 @@ function main() {
                 if (keys[" "] && placeModeTimer > delay) {
                     placeModeTimer = 0;
                     placeMode *= -1;
+                }
+
+                if (keys["b"] && boundaryModeTimer > delay) {
+                    boundaryModeTimer = 0;
+                    boundaryMode *= -1;
                 }
 
                 // arrow handling
@@ -2516,6 +2550,13 @@ function main() {
                 ctx.globalAlpha = chargeLeftDisplayOpacity;
                 drawChargeLeftDisplay();
                 ctx.globalAlpha = 1;
+            }
+
+            if (boundaryMode == 1) {
+                ctx.beginPath();
+                ctx.font = "20px Comic Sans MS";
+                ctx.fillStyle = "#ffffff";
+                ctx.fillText("B", 490, 25);
             }
 
             break;
